@@ -1,0 +1,434 @@
+package com.it10x.foodappgstav7_04.navigation
+
+import ThemeSettingsScreen
+import android.app.Application
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import com.it10x.foodappgstav7_04.com.ui.settings.PrinterRoleSelectionScreen
+import com.it10x.foodappgstav7_04.data.PrinterPreferences
+import com.it10x.foodappgstav7_04.data.PrinterRole
+import com.it10x.foodappgstav7_04.data.pos.AppDatabaseProvider
+
+import com.it10x.foodappgstav7_04.data.pos.viewmodel.POSOrdersViewModel
+import com.it10x.foodappgstav7_04.data.pos.viewmodel.POSOrdersViewModelFactory
+import com.it10x.foodappgstav7_04.printer.PrinterManager
+import com.it10x.foodappgstav7_04.ui.categories.LocalCategoriesScreen
+import com.it10x.foodappgstav7_04.ui.home.HomeScreen
+import com.it10x.foodappgstav7_04.ui.orders.online.OnlineOrdersScreen
+import com.it10x.foodappgstav7_04.ui.orders.local.LocalOrderDetailScreen
+import com.it10x.foodappgstav7_04.ui.orders.local.LocalOrderDetailViewModel
+import com.it10x.foodappgstav7_04.ui.orders.local.LocalOrderDetailViewModelFactory
+import com.it10x.foodappgstav7_04.ui.orders.local.LocalOrdersScreen
+
+
+import com.it10x.foodappgstav7_04.ui.pos.PosScreen
+import com.it10x.foodappgstav7_04.ui.products.LocalProductsScreen
+import com.it10x.foodappgstav7_04.ui.settings.*
+import com.it10x.foodappgstav7_04.viewmodel.*
+import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository
+
+
+import com.it10x.foodappgstav7_04.data.pos.repository.CartRepository
+import com.it10x.foodappgstav7_04.data.pos.repository.CustomerLedgerRepository
+import com.it10x.foodappgstav7_04.data.pos.repository.CustomerRepository
+import com.it10x.foodappgstav7_04.domain.usecase.TableReleaseUseCase
+import com.it10x.foodappgstav7_04.ui.cart.CartViewModel
+import com.it10x.foodappgstav7_04.ui.cart.CartViewModelFactory
+import com.it10x.foodappgstav7_04.ui.customer.CustomerLedgerScreen
+import com.it10x.foodappgstav7_04.ui.customer.CustomerLedgerViewModel
+import com.it10x.foodappgstav7_04.ui.customer.CustomerLedgerViewModelFactory
+import com.it10x.foodappgstav7_04.ui.customer.CustomerListScreen
+import com.it10x.foodappgstav7_04.ui.customer.CustomerViewModel
+import com.it10x.foodappgstav7_04.ui.customer.CustomerViewModelFactory
+import com.it10x.foodappgstav7_04.ui.delivery.DeliverySettlementScreen
+import com.it10x.foodappgstav7_04.ui.delivery.DeliverySettlementViewModel
+import com.it10x.foodappgstav7_04.ui.pos.ClassicPosScreen
+import com.it10x.foodappgstav7_04.ui.pos.PosSessionViewModel
+
+import com.it10x.foodappgstav7_04.ui.sales.SalesScreen
+import com.it10x.foodappgstav7_04.ui.sales.SalesViewModel
+import com.it10x.foodappgstav7_04.ui.sales.SalesViewModelFactory
+
+@Composable
+fun NavigationHost(
+    navController: NavHostController,
+    printerManager: PrinterManager,
+    printerPreferences: PrinterPreferences,
+    realtimeOrdersViewModel: RealtimeOrdersViewModel,
+    paddingValues: PaddingValues = PaddingValues(),
+    onSavePrinterSettings: () -> Unit = {}
+) {
+
+    val context = LocalContext.current
+    val db = AppDatabaseProvider.get(context)
+
+    // -----------------------------
+    // SHARED VIEWMODELS
+    // -----------------------------
+
+    val printerSettingsViewModel: PrinterSettingsViewModel = viewModel(
+        factory = PrinterSettingsViewModelFactory(
+            prefs = printerPreferences,
+            printerManager = printerManager
+        )
+    )
+
+
+
+    val application = context.applicationContext as Application
+
+    val ordersViewModel: OnlineOrdersViewModel = viewModel(
+        factory = OnlineOrdersViewModelFactory(printerManager)
+    )
+    val posOrdersViewModel: POSOrdersViewModel = viewModel(
+        factory = POSOrdersViewModelFactory(
+            db = db,
+            printerManager = printerManager
+        )
+    )
+    val posSessionViewModel: PosSessionViewModel = viewModel()
+    val posTableViewModel: PosTableViewModel = viewModel()
+
+    val cartRepository = remember {
+        CartRepository(
+            db.cartDao(),
+            db.tableDao()
+        )
+    }
+
+    val tableReleaseUseCase = remember {
+        TableReleaseUseCase(
+            cartRepository = cartRepository,
+            tableDao = db.tableDao()
+        )
+    }
+
+    // -----------------------------
+    // NAV HOST
+    // -----------------------------
+
+    NavHost(
+        navController = navController,
+        startDestination = "pos",
+        modifier = Modifier.padding(paddingValues)
+    ) {
+
+
+
+        // ---------------- LOCAL PRODUCTS ----------------
+        composable("local_products") {
+            LocalProductsScreen()
+        }
+
+        // ---------------- SYNC ----------------
+        composable("sync_data") {
+            SyncScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // ---------------- LOCAL ORDERS ----------------
+        composable("local_orders") {
+
+            val localOrdersViewModel: POSOrdersViewModel = viewModel(
+                factory = POSOrdersViewModelFactory(
+                    db = db,
+                    printerManager = printerManager
+                )
+            )
+
+            LocalOrdersScreen(
+                viewModel = localOrdersViewModel,   // ✅ CORRECT TYPE
+                navController = navController
+            )
+        }
+
+        // ---------------- LOCAL ORDER DETAIL ----------------
+        composable(
+            route = "local_order_detail/{orderId}",
+            arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+        ) { backStackEntry ->
+
+            val orderId = backStackEntry.arguments!!.getString("orderId")!!
+
+            val ordersRepository = remember {
+                POSOrdersRepository(
+                    db = db,                          // ✅ ADD THIS
+                    orderMasterDao = db.orderMasterDao(),
+                    orderProductDao = db.orderProductDao(),
+                    cartDao = db.cartDao(),
+                    tableDao = db.tableDao()
+                )
+            }
+
+            val detailViewModel: LocalOrderDetailViewModel = viewModel(
+                factory = LocalOrderDetailViewModelFactory(
+                    orderId = orderId,
+                    repository = ordersRepository,
+                    printerManager = printerManager
+                )
+            )
+
+            LocalOrderDetailScreen(
+                viewModel = detailViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+
+        // ---------------- CATEGORIES ----------------
+        composable("local_categories") {
+            LocalCategoriesScreen()
+        }
+
+        // ---------------- HOME ----------------
+        composable("home") {
+            HomeScreen(navController = navController)
+        }
+
+        // ---------------- ONLINE ORDERS ----------------
+        composable("orders") {
+            OnlineOrdersScreen(
+
+                printerManager = printerManager,
+                ordersViewModel = ordersViewModel,
+                realtimeOrdersViewModel = realtimeOrdersViewModel
+            )
+        }
+
+        composable("products") { Text("Products Screen") }
+        composable("categories") { Text("Categories Screen") }
+
+
+
+        // ---------------- POS ----------------
+
+
+
+        composable("pos") {
+
+            val context = LocalContext.current
+            val db = AppDatabaseProvider.get(context)
+
+            val cartViewModel: CartViewModel = viewModel(
+                factory = CartViewModelFactory(
+                    repository = CartRepository(
+                        db.cartDao(),
+                        db.tableDao()
+                    ),
+                    tableReleaseUseCase = tableReleaseUseCase
+                )
+            )
+
+            PosScreen(
+                navController = navController,
+                onOpenSettings = {
+                    navController.navigate("printer_role_selection")
+                },
+                ordersViewModel = posOrdersViewModel,
+                posSessionViewModel = posSessionViewModel,
+                cartViewModel = cartViewModel,
+                posTableViewModel = posTableViewModel
+            )
+        }
+
+        composable("posClassic") {
+
+            val context = LocalContext.current
+            val db = AppDatabaseProvider.get(context)
+
+            val cartViewModel: CartViewModel = viewModel(
+                factory = CartViewModelFactory(
+                    repository = CartRepository(
+                        db.cartDao(),
+                        db.tableDao()
+                    ),
+                    tableReleaseUseCase = tableReleaseUseCase
+                )
+            )
+
+            ClassicPosScreen(
+                navController = navController,
+                onOpenSettings = {
+                    navController.navigate("printer_role_selection")
+                },
+                ordersViewModel = posOrdersViewModel,
+                posSessionViewModel = posSessionViewModel,
+                cartViewModel = cartViewModel,
+                posTableViewModel = posTableViewModel
+            )
+        }
+
+// ---------------- SALES ----------------
+        // ---------------- SALES ----------------
+        composable("sales") {
+
+            val context = LocalContext.current
+            val db = AppDatabaseProvider.get(context)
+
+            val salesViewModel: SalesViewModel = viewModel(
+                factory = SalesViewModelFactory(
+                    salesMasterDao = db.salesMasterDao()
+                )
+            )
+
+            SalesScreen(
+                viewModel = salesViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+
+
+        // ---------------- PRINTER SETTINGS ----------------
+        composable("printer_role_selection") {
+            PrinterRoleSelectionScreen(
+                prefs = printerPreferences,
+                onBillingClick = { navController.navigate("printer_settings/BILLING") },
+                onKitchenClick = { navController.navigate("printer_settings/KITCHEN") }
+            )
+        }
+
+        composable(
+            "printer_settings/{role}",
+            arguments = listOf(navArgument("role") { type = NavType.StringType })
+        ) { backStackEntry ->
+
+            val role = PrinterRole.valueOf(
+                backStackEntry.arguments!!.getString("role")!!
+            )
+
+            PrinterSettingsScreen(
+                viewModel = printerSettingsViewModel,
+                prefs = printerPreferences,
+                role = role,
+                onSave = {
+                    onSavePrinterSettings()
+                    navController.popBackStack()
+                },
+                onBack = { navController.popBackStack() },
+                onBluetoothSelected = {
+                    navController.navigate("bluetooth_devices/${role.name}")
+                },
+                onUSBSelected = {
+                    navController.navigate("usb_devices/${role.name}")
+                },
+                onLanSelected = {
+                    navController.navigate("lan_printer_settings/${role.name}")
+                }
+            )
+        }
+
+        composable("lan_printer_settings/{role}") { backStackEntry ->
+            val role = PrinterRole.valueOf(
+                backStackEntry.arguments!!.getString("role")!!
+            )
+            LanPrinterSettingsScreen(
+                viewModel = printerSettingsViewModel,
+                role = role,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable("bluetooth_devices/{role}") {
+            val role = PrinterRole.valueOf(
+                it.arguments!!.getString("role")!!
+            )
+            BluetoothDeviceScreen(
+                role = role,
+                settingsViewModel = printerSettingsViewModel
+            )
+        }
+
+        composable("usb_devices/{role}") {
+            USBPrinterScreen(
+                role = PrinterRole.valueOf(
+                    it.arguments!!.getString("role")!!
+                )
+            )
+        }
+
+        composable("advanced_settings") {
+            AdvancedSettingsScreen()
+        }
+
+
+
+
+        composable("theme_settings") {
+            ThemeSettingsScreen()
+        }
+
+
+        composable("customers") {
+
+            val context = LocalContext.current
+            val application = context.applicationContext as Application
+            val db = AppDatabaseProvider.get(application)
+
+            val viewModel: CustomerViewModel = viewModel(
+                factory = CustomerViewModelFactory(
+                    CustomerRepository(db.posCustomerDao())
+                )
+            )
+
+            CustomerListScreen(
+                viewModel = viewModel,
+                onCustomerClick = { customerId ->
+                    navController.navigate("customer_ledger/$customerId")
+                }
+            )
+        }
+
+
+        composable(
+            route = "customer_ledger/{customerId}",
+            arguments = listOf(
+                navArgument("customerId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+
+            val customerId = backStackEntry.arguments?.getString("customerId")!!
+
+            val context = LocalContext.current
+            val application = context.applicationContext as Application
+            val db = AppDatabaseProvider.get(application)
+
+            val repository = CustomerLedgerRepository(db)
+
+            val viewModel: CustomerLedgerViewModel = viewModel(
+                factory = CustomerLedgerViewModelFactory(repository, customerId)
+            )
+
+            CustomerLedgerScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+
+
+        composable("delivery_settlement") {
+            DeliverySettlementScreen(
+                viewModel = DeliverySettlementViewModel(db),
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+
+    }
+}

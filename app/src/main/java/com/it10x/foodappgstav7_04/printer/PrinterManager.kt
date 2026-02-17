@@ -1,0 +1,321 @@
+package com.it10x.foodappgstav7_04.printer
+
+import android.content.Context
+import android.util.Log
+import com.it10x.foodappgstav7_04.data.PrinterConfig
+import com.it10x.foodappgstav7_04.data.PrinterPreferences
+import com.it10x.foodappgstav7_04.data.PrinterRole
+import com.it10x.foodappgstav7_04.data.PrinterType
+import com.it10x.foodappgstav7_04.printer.bluetooth.BluetoothPrinter
+import com.it10x.foodappgstav7_04.printer.lan.LanPrinter
+import com.it10x.foodappgstav7_04.printer.usb.USBPrinter
+import com.it10x.foodappgstav7_04.data.print.OutletMapper
+import com.it10x.foodappgstav7_04.data.pos.AppDatabaseProvider
+import com.it10x.foodappgstav7_04.data.pos.entities.PosKotItemEntity
+import kotlinx.coroutines.runBlocking
+
+class PrinterManager(
+    private val context: Context
+) {
+
+    private val prefs by lazy { PrinterPreferences(context) }
+    fun appContext(): Context = context.applicationContext
+    // --------------------------------
+    // TEST PRINT (already OK)
+    // --------------------------------
+    fun printTest(
+        config: PrinterConfig,
+        onResult: (Boolean) -> Unit
+    ) {
+        val roleLabel = config.role.name
+
+        when (config.type) {
+
+            PrinterType.BLUETOOTH -> {
+            //    Log.d("PRINT_BT", "Test BT address='${config.bluetoothAddress}'")
+                if (config.bluetoothAddress.isBlank()) {
+                    onResult(false)
+                    return
+                }
+                BluetoothPrinter.printTest(
+                    config.bluetoothAddress,
+                    roleLabel,
+                    onResult
+                )
+            }
+
+            PrinterType.LAN -> {
+                if (config.ip.isBlank()) {
+                    onResult(false)
+                    return
+                }
+                LanPrinter.printTest(
+                    config.ip,
+                    config.port,
+                    roleLabel,
+                    onResult
+                )
+            }
+
+
+
+            PrinterType.USB -> {
+                val device = config.usbDevice ?: run {
+                    onResult(false)
+                    return
+                }
+
+                USBPrinter.printTest(
+                    context = context,
+                    device = device,
+                    roleLabel = roleLabel,
+                    onResult = onResult
+                )
+            }
+
+
+
+
+
+
+            PrinterType.WIFI -> onResult(false)
+        }
+    }
+
+    // --------------------------------
+    // REAL PRINT (USED BY BUTTON + AUTO)
+    // --------------------------------
+  fun printText(
+    role: PrinterRole,
+    text: String,
+    onResult: (Boolean) -> Unit = {}
+) {
+        Log.e("PRINT", "printer configured for role=$role")
+    val config = prefs.getPrinterConfig(role)
+    if (config == null) {
+        Log.e("PRINT", "No printer configured for role=$role")
+        onResult(false)
+        return
+    }
+
+    //Log.d("PRINT", "Printing role=$role type=${config.type}")
+    //  var  text1="kljkl"
+    when (config.type) {
+
+        PrinterType.BLUETOOTH -> {
+            if (config.bluetoothAddress.isBlank()) {
+                onResult(false)
+                return
+            }
+            BluetoothPrinter.printText(
+                config.bluetoothAddress,
+                text,
+                onResult
+            )
+        }
+
+        PrinterType.LAN -> {
+            if (config.ip.isBlank()) {
+                onResult(false)
+                return
+            }
+            LanPrinter.printText(
+                config.ip,
+                config.port,
+                text,
+                onResult
+            )
+        }
+
+        PrinterType.USB -> {
+            val device = config.usbDevice ?: run {
+                onResult(false)
+                return
+            }
+            USBPrinter.printText(
+                text,
+       onResult
+            )
+
+
+
+        }
+
+        PrinterType.WIFI -> onResult(false)
+    }
+}
+
+
+    fun printTextNew(
+        role: PrinterRole,
+        order: PrintOrder,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+        Log.e("PRINT_NEW", "Printing for role=$role")
+
+        // Get printer configuration and preferences
+        val config = prefs.getPrinterConfig(role)
+        val pageSize = prefs.getPrinterSize(role) ?: "80mm"  // ✅ stored in PrinterPreferences
+
+        if (config == null) {
+            Log.e("PRINT_NEW", "No printer configured for role=$role")
+            onResult(false)
+            return
+        }
+
+        // ✅ Select format based on page size
+        val size = prefs.getPrinterSize(role) ?: "58mm"
+
+        // ✅ Auto-load outlet info if not provided
+
+        val outletDao = AppDatabaseProvider.get(context).outletDao()
+        val outletEntity = runBlocking { outletDao.getOutlet() }
+        val info = OutletMapper.fromEntity(outletEntity)
+
+
+        // ✅ Select format based on printer page size
+        val receiptText = when (size) {
+            "80mm" -> ReceiptFormatter.billing48(order, info)
+            else -> ReceiptFormatter.billing(order, info)
+        }
+
+
+
+        Log.d(
+            "PRINT_NEW",
+            "${info.defaultCurrency} Printer type=${config.type}, size=$pageSize, bluetooth=${config.bluetoothAddress}, ip=${config.ip}, "
+        )
+
+        // ✅ Printing logic (kept same as before)
+        when (config.type) {
+            PrinterType.BLUETOOTH -> {
+                if (config.bluetoothAddress.isBlank()) {
+                    Log.e("PRINT_NEW", "Bluetooth address missing")
+                    onResult(false)
+                    return
+                }
+                BluetoothPrinter.printText(
+                    config.bluetoothAddress,
+                    receiptText,
+                    onResult
+                )
+            }
+
+            PrinterType.LAN -> {
+                if (config.ip.isBlank()) {
+                    Log.e("PRINT_NEW", "LAN IP missing")
+                    onResult(false)
+                    return
+                }
+                LanPrinter.printText(
+                    config.ip,
+                    config.port,
+                    receiptText,
+                    onResult
+                )
+            }
+
+            PrinterType.USB -> {
+                val device = config.usbDevice ?: run {
+                    Log.e("PRINT_NEW", "USB device not found")
+                    onResult(false)
+                    return
+                }
+                USBPrinter.printText(
+                    receiptText,
+                    onResult
+                )
+            }
+
+            PrinterType.WIFI -> {
+                Log.e("PRINT_NEW", "WiFi printing not supported yet")
+                onResult(false)
+            }
+        }
+    }
+
+
+    fun printTextKitchen(
+        role: PrinterRole,
+        sessionKey: String,
+        orderType: String,
+        items: List<PosKotItemEntity>,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+        Log.e("PRINT", "printer configured for role=$role")
+        val config = prefs.getPrinterConfig(role)
+        if (config == null) {
+            Log.e("PRINT", "No printer configured for role=$role")
+            onResult(false)
+            return
+        }
+
+        val text = ReceiptFormatter.posKitchen(
+            sessionKey ,
+            orderType,
+            items
+        )
+
+        //Log.d("PRINT", "Printing role=$role type=${config.type}")
+        //  var  text1="kljkl"
+        when (config.type) {
+
+            PrinterType.BLUETOOTH -> {
+                if (config.bluetoothAddress.isBlank()) {
+                    onResult(false)
+                    return
+                }
+                BluetoothPrinter.printText(
+                    config.bluetoothAddress,
+                    text,
+                    onResult
+                )
+            }
+
+            PrinterType.LAN -> {
+                if (config.ip.isBlank()) {
+                    onResult(false)
+                    return
+                }
+                LanPrinter.printText(
+                    config.ip,
+                    config.port,
+                    text,
+                    onResult
+                )
+            }
+
+            PrinterType.USB -> {
+                val device = config.usbDevice ?: run {
+                    onResult(false)
+                    return
+                }
+                USBPrinter.printText(
+                    text,
+                    onResult
+                )
+
+
+            }
+
+            PrinterType.WIFI -> onResult(false)
+        }
+    }
+
+
+
+    // --------------------------------
+    // OPTIONAL
+    // --------------------------------
+    fun printTestForRole(
+        configProvider: () -> PrinterConfig?,
+        onResult: (Boolean) -> Unit
+    ) {
+        val config = configProvider()
+        if (config == null) {
+            onResult(false)
+            return
+        }
+        printTest(config, onResult)
+    }
+}
