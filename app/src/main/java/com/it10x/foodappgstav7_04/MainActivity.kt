@@ -203,6 +203,24 @@ class MainActivity : ComponentActivity() {
                                 )
 
                                 NavigationDrawerItem(
+                                    label = { Text("Waiter") },
+                                    selected = false,
+                                    onClick = {
+                                        scope.launch { drawerState.close() }
+                                        navController.navigate("posWaiter") {
+                                            popUpTo("posWaiter") { inclusive = true }
+                                        }
+                                    }
+                                )
+
+                                Divider(
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                        .padding(bottom = 4.dp),
+                                    thickness = 0.5.dp
+                                )
+
+                                NavigationDrawerItem(
                                     label = { Text("Online Orders") },
                                     selected = false,
                                     onClick = {
