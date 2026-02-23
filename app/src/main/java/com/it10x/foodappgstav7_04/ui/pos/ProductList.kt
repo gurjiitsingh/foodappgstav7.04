@@ -148,34 +148,51 @@ private fun ParentProductCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                // ➖ Remove (border only)
-                // ➖ Remove (border only)
-                OutlinedButton(
-                    onClick = { cartViewModel.decrease(product.id, tableNo) },
-                    border = BorderStroke(1.5.dp, removeBorder),
-                    modifier = Modifier.size(width = 48.dp, height = 48.dp),
-                    contentPadding = PaddingValues(0.dp),
-                    shape = RectangleShape
+                // 🔒 LEFT SIDE: fixed container so layout never shifts
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "−",
-                        color = removeText,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+
+                    // ➖ Remove slot (always reserves space)
+                    Box(
+                        modifier = Modifier.size(width = 48.dp, height = 48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (currentQty > 0) {
+                            OutlinedButton(
+                                onClick = { cartViewModel.decrease(product.id, tableNo) },
+                                border = BorderStroke(1.5.dp, removeBorder),
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(0.dp),
+                                shape = RectangleShape
+                            ) {
+                                Text(
+                                    "−",
+                                    color = removeText,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    // 🔢 Qty slot (fixed width)
+                    Box(
+                        modifier = Modifier.size(width = 32.dp, height = 48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (currentQty > 0) {
+                            Text(
+                                currentQty.toString(),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = productText
+                            )
+                        }
+                    }
                 }
 
-
-                if (currentQty > 0) {
-                    Text(
-                        text = currentQty.toString(),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = productText
-                    )
-                }
-
-                // ➕ Add
+                // ➕ Add (unchanged behavior)
                 IconButton(
                     onClick = {
                         cartViewModel.addToCart(
@@ -183,32 +200,30 @@ private fun ParentProductCard(
                                 productId = product.id,
                                 name = toTitleCase(product.name),
                                 basePrice = price,
-                                note = "",                // ✅ change here
-                                modifiersJson = "",       // ✅ change here
+                                note = "",
+                                modifiersJson = "",
                                 quantity = 1,
                                 taxRate = product.taxRate ?: 0.0,
                                 taxType = product.taxType ?: "inclusive",
                                 parentId = null,
                                 isVariant = false,
                                 categoryId = product.categoryId,
+                                categoryName = product.productCat,
                                 sessionId = sessionId,
                                 tableId = tableNo
                             )
                         )
                         onProductAdded()
-                         tableViewModel.markOrdering(tableNo)
+                        tableViewModel.markOrdering(tableNo)
                     },
                     modifier = Modifier
                         .size(width = 40.dp, height = 32.dp)
                         .background(addBg, RectangleShape)
                 ) {
-                    Text(
-                        "+",
-                        color = addText,
-                        fontSize = 18.sp
-                    )
+                    Text("+", color = addText, fontSize = 18.sp)
                 }
             }
+
         }
     }
 }

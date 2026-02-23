@@ -22,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.it10x.foodappgstav7_04.viewmodel.PosTableViewModel
 import androidx.compose.animation.animateContentSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -49,11 +51,13 @@ fun TableSelectorGrid(
     ) {
         Surface(
             modifier = Modifier
-                .fillMaxWidth(0.96f) // ✅ wider dialog — adjust 0.96f → 1f for full screen width
+                .fillMaxWidth(0.98f)
                 .padding(8.dp),
-            shape = MaterialTheme.shapes.medium,
-            tonalElevation = 6.dp
-        ) {
+            shape = RoundedCornerShape(16.dp),
+            tonalElevation = 8.dp,
+            shadowElevation = 8.dp
+        )
+        {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -61,6 +65,21 @@ fun TableSelectorGrid(
                     .verticalScroll(rememberScrollState())
                     .padding(6.dp)
             ) {
+                // 🔹 Close buttons (like cancel)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close"
+                        )
+                    }
+                }
+
                 groupedByArea.entries.forEach { (areaName, areaTables) ->
 
                     // 🔹 Area Title
@@ -81,12 +100,12 @@ fun TableSelectorGrid(
 
                     // Estimate how many columns fit based on screen width and min cell size
                     val screenWidth = LocalConfiguration.current.screenWidthDp
-                    val columns = (screenWidth / 110).coerceAtLeast(1) // ~100dp per cell + spacing
+                    val columns = (screenWidth / 105).coerceAtLeast(1) // ~100dp per cell + spacing
                     val rows = (areaTables.size + columns - 1) / columns
-                    val gridHeight = (rows * 130).dp
+                    val gridHeight = (rows * 105).dp
                     LazyVerticalGrid(
                         //columns = GridCells.Fixed(9), // ✅ keep logic
-                        columns = GridCells.Adaptive(minSize = 100.dp),
+                        columns = GridCells.Adaptive(minSize = 85.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(gridHeight)
@@ -159,23 +178,23 @@ fun TableSelectorGrid(
                                         StatusBadge(
                                             icon = "🛒",
                                             text = ui.cartCount.toString(),
-                                            bgColor = Color(0xFF1976D2).copy(alpha = 0.25f),
+                                            bgColor = Color(0xFF1976D2).copy(alpha = 0.55f),
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .alpha(if (ui.cartCount > 0) 1f else 0f)
                                         )
-                                        StatusBadge(
-                                            icon = "🍳",
-                                            text = ui.kitchenPendingCount.toString(),
-                                            bgColor = Color(0xFFF9A825).copy(alpha = 0.25f),
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .alpha(if (ui.kitchenPendingCount > 0) 1f else 0f)
-                                        )
+//                                        StatusBadge(
+//                                            icon = "🍳",
+//                                            text = ui.kitchenPendingCount.toString(),
+//                                            bgColor = Color(0xFFF9A825).copy(alpha = 0.25f),
+//                                            modifier = Modifier
+//                                                .fillMaxWidth()
+//                                                .alpha(if (ui.kitchenPendingCount > 0) 1f else 0f)
+//                                        )
                                         StatusBadge(
                                             icon = "🧾",
                                             text = ui.billDoneCount.toString(),
-                                            bgColor = Color(0xFF2E7D32).copy(alpha = 0.25f),
+                                            bgColor = Color(0xFF2E7D32).copy(alpha = 0.55f),
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .alpha(if (ui.billDoneCount > 0) 1f else 0f)
@@ -187,15 +206,7 @@ fun TableSelectorGrid(
                     }
                 }
 
-                // 🔹 Footer buttons (like cancel)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                }
+
             }
         }
     }

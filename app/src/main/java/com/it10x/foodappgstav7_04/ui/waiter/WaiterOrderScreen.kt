@@ -47,15 +47,20 @@ import com.it10x.foodappgstav7_04.ui.cart.CartUiEvent
 import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModelFactory
 
 import androidx.compose.ui.graphics.Shape
+import com.google.firebase.firestore.FirebaseFirestore
+import com.it10x.foodappgstav7_04.data.pos.repository.WaiterKitchenRepository
 
 import com.it10x.foodappgstav7_04.data.pos.viewmodel.ProductsLocalViewModel
 import com.it10x.foodappgstav7_04.data.pos.viewmodel.ProductsLocalViewModelFactory
 import com.it10x.foodappgstav7_04.ui.components.PosTouchKeyboard
 import com.it10x.foodappgstav7_04.ui.pos.CategorySelectorDialog
 import com.it10x.foodappgstav7_04.ui.pos.PosSessionViewModel
-import com.it10x.foodappgstav7_04.ui.pos.ProductList
-import com.it10x.foodappgstav7_04.ui.pos.RightPanel
 import com.it10x.foodappgstav7_04.ui.pos.TableSelectorGrid
+import com.it10x.foodappgstav7_04.ui.waiter.WaiterProductList
+import com.it10x.foodappgstav7_04.ui.waiter.WaiterRightPanel
+import com.it10x.foodappgstav7_04.ui.waiterkitchen.WaiterKitchenScreen
+import com.it10x.foodappgstav7_04.ui.waiterkitchen.WaiterKitchenViewModel
+import com.it10x.foodappgstav7_04.ui.waiterkitchen.WaiterKitchenViewModelFactory
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,7 +105,7 @@ fun WaiterPosScreen(
         .firstOrNull { it.table.id == tableId }
         ?.table
         ?.tableName
- var selectedTableName = selectedTableName1 ?: ""
+    var selectedTableName = selectedTableName1 ?: ""
 
 
     val productsViewModel: ProductsLocalViewModel = viewModel(
@@ -118,6 +123,13 @@ fun WaiterPosScreen(
         )
     }
 
+//    val waiterKitchenRepository = remember {
+//        WaiterKitchenRepository()
+//    }
+
+    val waiterKitchenRepository = remember {
+        WaiterKitchenRepository(FirebaseFirestore.getInstance())
+    }
 
 //    val hasHardwareKeyboard =
 //        LocalConfiguration.current.keyboard != Configuration.KEYBOARD_NOKEYS
@@ -219,7 +231,7 @@ fun WaiterPosScreen(
     }
     LaunchedEffect(orderType) {
         searchQuery = ""
-       // productsViewModel.setSearchQuery("")
+        // productsViewModel.setSearchQuery("")
         showSearchKeyboard = false
     }
 
@@ -246,94 +258,94 @@ fun WaiterPosScreen(
                 // ===== TABLET: SINGLE ROW =====
 
 
-if(!isPhone) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+                if(!isPhone) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
 
-        // -------- ORDER TYPE BUTTONS --------
-        PosOrderTypeButton(
-            label = "Dine In",
-            selected = orderType == "DINE_IN",
-            onClick = { orderType = "DINE_IN"; showTableSelector = true },
-            shape = commonShape,
-            height = commonHeight
-        )
+                        // -------- ORDER TYPE BUTTONS --------
+                        PosOrderTypeButton(
+                            label = "Dine In",
+                            selected = orderType == "DINE_IN",
+                            onClick = { orderType = "DINE_IN"; showTableSelector = true },
+                            shape = commonShape,
+                            height = commonHeight
+                        )
 
 
-        // -------- TABLE CHIP --------
-        if (orderType == "DINE_IN" && tableName != null) {
-            OrderChip(
-                label = tableName!!,
-                selected = true,
-                onClick = { showTableSelector = true },
-                shape = commonShape,
-                height = commonHeight
-            )
-        }
+                        // -------- TABLE CHIP --------
+                        if (orderType == "DINE_IN" && tableName != null) {
+                            OrderChip(
+                                label = tableName!!,
+                                selected = true,
+                                onClick = { showTableSelector = true },
+                                shape = commonShape,
+                                height = commonHeight
+                            )
+                        }
 
-        // -------- CATEGORY BUTTON --------
-        Button(
-            onClick = { showCategorySelector = true },
-            modifier = Modifier.height(commonHeight), // set height here
-            shape = commonShape, // set shape here
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-        ) {
-            Text("Category")
-        }
+                        // -------- CATEGORY BUTTON --------
+                        Button(
+                            onClick = { showCategorySelector = true },
+                            modifier = Modifier.height(commonHeight), // set height here
+                            shape = commonShape, // set shape here
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("Category")
+                        }
 
-        // -------- SEARCH BOX + CLEAR --------
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
+                        // -------- SEARCH BOX + CLEAR --------
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
 
-            // SEARCH BOX
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(commonHeight)
-                    .clickable { showSearchKeyboard = true }
-            ) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = {},
-                    modifier = Modifier.fillMaxSize(),
-                    placeholder = { Text("Search by name or code") },
-                    singleLine = true,
-                    readOnly = true,
-                    enabled = false,
-                    textStyle = MaterialTheme.typography.bodyMedium
-                )
-            }
+                            // SEARCH BOX
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(commonHeight)
+                                    .clickable { showSearchKeyboard = true }
+                            ) {
+                                OutlinedTextField(
+                                    value = searchQuery,
+                                    onValueChange = {},
+                                    modifier = Modifier.fillMaxSize(),
+                                    placeholder = { Text("Search by name or code") },
+                                    singleLine = true,
+                                    readOnly = true,
+                                    enabled = false,
+                                    textStyle = MaterialTheme.typography.bodyMedium
+                                )
+                            }
 
-            // CLEAR BUTTON
-            IconButton(
-                onClick = {
-                    searchQuery = ""
-                    productsViewModel.setSearchQuery("")
-                },
-                modifier = Modifier
-                    .size(commonHeight)
-                    .background(
-                        MaterialTheme.colorScheme.surfaceVariant,
-                        shape = commonShape
-                    )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Clear",
-                    tint = Color.White // make it visible
-                )
-            }
-        }
-    }
-}
+                            // CLEAR BUTTON
+                            IconButton(
+                                onClick = {
+                                    searchQuery = ""
+                                    productsViewModel.setSearchQuery("")
+                                },
+                                modifier = Modifier
+                                    .size(commonHeight)
+                                    .background(
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                        shape = commonShape
+                                    )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Clear",
+                                    tint = Color.White // make it visible
+                                )
+                            }
+                        }
+                    }
+                }
 
                 if(isPhone){
                     Column(
@@ -429,7 +441,7 @@ if(!isPhone) {
                 // ---------- SEARCH BOX ----------
 
 
-                ProductListWaiter(
+                WaiterProductList(
                     filteredProducts = filteredProducts,
                     //  variants = variants,
                     cartViewModel = cartViewModel,
@@ -499,7 +511,7 @@ if(!isPhone) {
                 ) {
 
                     // ---------- CART (ALWAYS VISIBLE) ----------
-                    RightPanel(
+                    WaiterRightPanel(
                         cartViewModel = cartViewModel,
                         ordersViewModel = ordersViewModel,
                         tableViewModel = tableVm,
@@ -548,7 +560,7 @@ if(!isPhone) {
 
 
 
-                      //  Spacer(modifier = Modifier.height(8.dp))
+                        //  Spacer(modifier = Modifier.height(8.dp))
 
                         PosTouchKeyboard(
                             onKeyPress = { char ->
@@ -606,7 +618,7 @@ if(!isPhone) {
             sheetState = sheetState,
             onDismissRequest = { showCartSheet = false }
         ) {
-            RightPanel(
+            WaiterRightPanel(
                 cartViewModel = cartViewModel,
                 ordersViewModel = ordersViewModel,
                 tableViewModel = tableVm,
@@ -627,7 +639,7 @@ if(!isPhone) {
 
     // ================= KITCHEN POPUP =================
     if (showKitchen && sessionId != null) {
-      //  val kitchenKey by cartViewModel.sessionKey.collectAsState()
+        //  val kitchenKey by cartViewModel.sessionKey.collectAsState()
         val kitchenTitle = when (orderType) {
             "DINE_IN" -> "Table ${tableId ?: ""}"
             "TAKEAWAY" -> "Takeaway"
@@ -635,9 +647,9 @@ if(!isPhone) {
             else -> sessionId
         }
 
-        val kitchenViewModel: KitchenViewModel = viewModel(
+        val waiterkitchenViewModel: WaiterKitchenViewModel = viewModel(
             key = "KitchenVM_${sessionId ?: orderType}",
-            factory = KitchenViewModelFactory(
+            factory = WaiterKitchenViewModelFactory(
                 app = LocalContext.current.applicationContext as Application,
                 tableId = tableId ?: orderType,
                 tableName = selectedTableName ?: "",
@@ -645,8 +657,9 @@ if(!isPhone) {
                 orderType = orderType,
                 repository = repository,
                 cartViewModel = cartViewModel,
+                waiterKitchenRepository = waiterKitchenRepository
 
-            )
+                )
         )
 
         val isPhone = LocalConfiguration.current.screenWidthDp < 600
@@ -705,11 +718,11 @@ if(!isPhone) {
                             .heightIn(min = 300.dp, max = 600.dp)
                             .padding(top = 4.dp)
                     ) {
-                        KitchenScreen(
+                        WaiterKitchenScreen(
                             sessionId = sessionId!!,
                             tableNo = tableId ?: orderType,
                             tableName = selectedTableName ?: "",
-                            kitchenViewModel = kitchenViewModel,
+                            waiterkitchenViewModel = waiterkitchenViewModel,
                             cartViewModel = cartViewModel,
                             onKitchenEmpty = { showKitchen = false },
                             orderType = orderType
@@ -725,18 +738,18 @@ if(!isPhone) {
 
 
 // ================= BILL POPUP =================
-  //  val billingKey by cartViewModel.sessionKey.collectAsState()
+    //  val billingKey by cartViewModel.sessionKey.collectAsState()
 
     if (LocalConfiguration.current.screenWidthDp > 600)
         BillDialog(
-        showBill = showBill,
-        onDismiss = { showBill = false },
-        sessionId = sessionId,
-        tableId = tableId,
-        orderType = orderType,
-        selectedTableName = selectedTableName ?: ""
-    )
-else{
+            showBill = showBill,
+            onDismiss = { showBill = false },
+            sessionId = sessionId,
+            tableId = tableId,
+            orderType = orderType,
+            selectedTableName = selectedTableName ?: ""
+        )
+    else{
         BillDialogPhone(
             showBill = showBill,
             onDismiss = { showBill = false },
@@ -867,6 +880,8 @@ fun toTitleCase(text: String): String {
             word.replaceFirstChar { it.uppercase() }
         }
 }
+
+
 
 
 

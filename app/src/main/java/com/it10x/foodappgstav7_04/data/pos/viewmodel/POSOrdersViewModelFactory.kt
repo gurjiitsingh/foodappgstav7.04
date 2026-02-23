@@ -3,6 +3,10 @@ package com.it10x.foodappgstav7_04.data.pos.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.it10x.foodappgstav7_04.data.pos.AppDatabase
+import com.it10x.foodappgstav7_04.data.pos.dao.CartDao
+import com.it10x.foodappgstav7_04.data.pos.dao.OrderMasterDao
+import com.it10x.foodappgstav7_04.data.pos.dao.OrderProductDao
+import com.it10x.foodappgstav7_04.data.pos.dao.TableDao
 import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository
 import com.it10x.foodappgstav7_04.printer.PrinterManager
 

@@ -4,10 +4,14 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.it10x.foodappgstav7_04.data.PrinterRole
+import com.it10x.foodappgstav7_04.data.online.repository.CashierOrderSyncRepository
+import com.it10x.foodappgstav7_04.data.pos.AppDatabaseProvider
 import com.it10x.foodappgstav7_04.data.pos.dao.KotItemDao
 import com.it10x.foodappgstav7_04.data.pos.dao.OrderMasterDao
 import com.it10x.foodappgstav7_04.data.pos.dao.OrderProductDao
 import com.it10x.foodappgstav7_04.data.pos.dao.OutletDao
+import com.it10x.foodappgstav7_04.data.pos.entities.PosCartEntity
+import com.it10x.foodappgstav7_04.data.pos.entities.PosKotBatchEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosKotItemEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosOrderItemEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosOrderMasterEntity
@@ -18,14 +22,17 @@ import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository
 import com.it10x.foodappgstav7_04.data.pos.repository.POSPaymentRepository
 import com.it10x.foodappgstav7_04.printer.PrintOrderBuilder
 import com.it10x.foodappgstav7_04.printer.PrinterManager
+import com.it10x.foodappgstav7_04.printer.ReceiptFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
+import com.it10x.foodappgstav7_04.data.print.OutletInfo
 import com.it10x.foodappgstav7_04.data.print.OutletMapper
 import com.it10x.foodappgstav7_04.ui.payment.PaymentInput
 import kotlinx.coroutines.flow.Flow
@@ -34,6 +41,7 @@ import com.it10x.foodappgstav7_04.data.pos.dao.PosCustomerDao
 import com.it10x.foodappgstav7_04.data.pos.dao.PosCustomerLedgerDao
 import com.it10x.foodappgstav7_04.data.pos.entities.PosCustomerEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosCustomerLedgerEntity
+import com.it10x.foodappgstav7_04.data.pos.repository.KotRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.update
 
@@ -51,7 +59,9 @@ class BillViewModel(
     private val outletRepository: OutletRepository,
     private val paymentRepository: POSPaymentRepository,
     private val customerDao: PosCustomerDao,
-    private val ledgerDao: PosCustomerLedgerDao
+    private val ledgerDao: PosCustomerLedgerDao,
+    private val kotRepository: KotRepository,
+    private val cashierOrderSyncRepository: CashierOrderSyncRepository
 ) : ViewModel() {
 
     // --------------------------------------------------------
@@ -75,6 +85,21 @@ class BillViewModel(
     val customerSuggestions: StateFlow<List<PosCustomerEntity>> = _customerSuggestions
 
 
+    // ---------------- PAYMENT PROTECTION ----------------
+
+    private val _event = MutableStateFlow<String?>(null)
+    val event: StateFlow<String?> = _event
+
+    private val _isProcessing = MutableStateFlow(false)
+    val isProcessing: StateFlow<Boolean> = _isProcessing
+
+    private fun sendEvent(message: String) {
+        _event.value = message
+    }
+
+    fun clearEvent() {
+        _event.value = null
+    }
 
     fun setFlatDiscount(value: Double) {
         _discountFlat.value = value.coerceAtLeast(0.0)
@@ -98,9 +123,11 @@ class BillViewModel(
         get() = orderType
 
     init {
-        Log.d("BILL_INIT", "Initialized | table=$tableId")
+       // Log.d("BILL_INIT", "Initialized | table=$tableId")
+
         observeBill()
         loadCurrency()
+
     }
 
     // --------------------------------------------------------
@@ -159,14 +186,28 @@ class BillViewModel(
 
 
 
+//                val subtotal = billingItems.sumOf { it.itemtotal }
+//                val tax = billingItems.sumOf { it.taxTotal }
+//
+//                val percentValue = subtotal * (percent / 100.0)
+//                val appliedDiscount = if (flat > 0) flat else percentValue
+//
+//                val finalTotal = (subtotal + tax - appliedDiscount)
+//                    .coerceAtLeast(0.0)
+
                 val subtotal = billingItems.sumOf { it.itemtotal }
-                val tax = billingItems.sumOf { it.taxTotal }
+                val totalTax = billingItems.sumOf { it.taxTotal }
 
                 val percentValue = subtotal * (percent / 100.0)
-                val appliedDiscount = if (flat > 0) flat else percentValue
+                val discount = if (flat > 0) flat else percentValue
 
-                val finalTotal = (subtotal + tax - appliedDiscount)
-                    .coerceAtLeast(0.0)
+                val safeDiscount = discount.coerceAtMost(subtotal)
+
+                val taxAfterDiscount =
+                    if (subtotal == 0.0) 0.0
+                    else totalTax * (1 - safeDiscount / subtotal)
+
+                val finalTotal = (subtotal - safeDiscount) + taxAfterDiscount
 
                 _uiState.update { old ->
 
@@ -174,15 +215,32 @@ class BillViewModel(
                         loading = false,
                         items = billingItems,
                         subtotal = subtotal,
-                        tax = tax,
+                        tax = taxAfterDiscount,
                         discountFlat = flat,
                         discountPercent = percent,
-                        discountApplied = appliedDiscount,
+                        discountApplied = safeDiscount,
                         total = finalTotal
                     )
                 }
+
+//                _uiState.update {
+//                    it.copy(
+//                        subtotal = subtotal,
+//                        tax = taxAfterDiscount,
+//                        discountApplied = safeDiscount,
+//                        total = finalTotal
+//                    )
+//                }
+
+
+
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+
     }
 
     fun resetBillUi() {
@@ -217,7 +275,23 @@ class BillViewModel(
         phone: String
     ) {
 
+        if (_isProcessing.value) {
+            sendEvent("Payment already in progress")
+            return
+        }
+
+
+
         viewModelScope.launch {
+
+            if (_isProcessing.value) {
+                sendEvent("Payment already in progress")
+                return@launch
+            }
+
+            _isProcessing.value = true
+
+            try {
 
             val inputPhone = phone.trim()
             val inputName = name.trim().ifBlank { "Customer" }
@@ -225,8 +299,10 @@ class BillViewModel(
             val kotItems = kotItemDao
                 .getItemsForTableSync(tableId)
                 .filter { it.status == "DONE" }
-
-            if (kotItems.isEmpty()) return@launch
+                if (kotItems.isEmpty()) {
+                    sendEvent("No items to bill")
+                    return@launch
+                }
 
             val itemSubtotal = kotItems.sumOf { it.basePrice * it.quantity }
 
@@ -255,31 +331,21 @@ class BillViewModel(
             val percentValue = itemSubtotal * (percent / 100.0)
 
             val discount = if (flat > 0) flat else percentValue
+            val safeDiscount = discount.coerceAtMost(itemSubtotal)
 
-            val grandTotal = (itemSubtotal + taxTotal - discount)
-                .coerceAtLeast(0.0)
+            val adjustedTax =
+                if (itemSubtotal == 0.0) 0.0
+                else taxTotal * (1 - safeDiscount / itemSubtotal)
+
+            Log.d("PAY_DEBUG", "adjustedTax: $adjustedTax")
+
+            val grandTotal = (itemSubtotal - safeDiscount) + adjustedTax
+
 
             // ===========================
             // PAYMENT CALCULATION
             // ===========================
 
-//            val totalPaid = payments
-//                .filter { it.mode in listOf("CASH", "CARD", "UPI", "WALLET") }
-//                .sumOf { it.amount }
-//
-//            val totalCredit = payments
-//                .filter { it.mode == "CREDIT" }
-//                .sumOf { it.amount }
-//
-//            val deliveryPending = payments
-//                .filter { it.mode == "DELIVERY_PENDING" }
-//                .sumOf { it.amount }
-//
-////            val dueAmount = (grandTotal - totalPaid).coerceAtLeast(0.0)
-//            val dueAmount = when {
-//                deliveryPending > 0 -> 0.0   // not yet due
-//                else -> (grandTotal - totalPaid).coerceAtLeast(0.0)
-//            }
 
             val totalPaid = payments
                 .filter { it.mode in listOf("CASH", "CARD", "UPI", "WALLET") }
@@ -319,13 +385,18 @@ class BillViewModel(
             // PHONE VALIDATION
             // ===========================
 
-            if ((paymentStatus == "CREDIT" || paymentStatus == "PARTIAL")
-                && inputPhone.isBlank()
-            ) {
-                Log.e("CREDIT", "Phone required for credit/partial sale")
-                return@launch
-            }
+                if ((paymentStatus == "CREDIT" || paymentStatus == "PARTIAL")
+                    && inputPhone.isBlank()
+                ) {
+                    sendEvent("Phone required for credit sale")
+                    return@launch
+                }
 
+            Log.d("PAY_DEBUG", "---- PAY BILL START ----")
+            Log.d("PAY_DEBUG", "Payments: $payments")
+            Log.d("PAY_DEBUG", "Name: $name")
+            Log.d("PAY_DEBUG", "Phone: $phone")
+            Log.d("PAY_DEBUG", "GrandTotal: ${_uiState.value.total}")
 
             // ===========================
 // ENSURE CUSTOMER EXISTS (IF PHONE ENTERED)
@@ -432,14 +503,11 @@ class BillViewModel(
                 dLandmark = deliveryAddress?.landmark,
 
                 itemTotal = itemSubtotal,
-                taxTotal = taxTotal,
-                discountTotal = discount,
+                taxTotal = adjustedTax,
+                discountTotal = safeDiscount,
                 grandTotal = grandTotal,
 
                 paymentMode = paymentMode,
-//                paymentStatus = paymentStatus,
-//                paidAmount = totalPaid,
-//                dueAmount = totalCredit,
                 paymentStatus = paymentStatus,
                 paidAmount = paidAmount,
                 dueAmount = dueAmount,
@@ -458,53 +526,72 @@ class BillViewModel(
                 notes = null
             )
 
-            val orderItems = kotItems
-                .groupBy {
-                    listOf(
-                        it.productId,
-                        it.basePrice,
-                        it.taxRate,
-                        it.note,
-                        it.modifiersJson
-                    )
-                }
-                .map { (_, group) ->
+                val orderItems = kotItems
+                    .groupBy {
+                        listOf(
+                            it.productId,
+                            it.basePrice,
+                            it.taxRate,
+                            it.note,
+                            it.modifiersJson
+                        )
+                    }
+                    .map { (_, group) ->
 
-                    val first = group.first()
-                    val quantity = group.sumOf { it.quantity }
-                    val subtotal = first.basePrice * quantity
+                        val first = group.first()
+                        val quantity = group.sumOf { it.quantity }
+                        val subtotal = first.basePrice * quantity
 
-                    val taxPerItem =
-                        if (first.taxType == "exclusive")
-                            first.basePrice * (first.taxRate / 100)
-                        else 0.0
+                        val taxPerItem =
+                            if (first.taxType == "exclusive")
+                                first.basePrice * (first.taxRate / 100)
+                            else 0.0
 
-                    val taxTotalItem = taxPerItem * quantity
+                        val taxTotalItem = taxPerItem * quantity
 
-                    PosOrderItemEntity(
-                        id = UUID.randomUUID().toString(),
-                        orderMasterId = orderId,
-                        productId = first.productId,
-                        name = first.name,
-                        categoryId = first.categoryId,
-                        parentId = first.parentId,
-                        isVariant = first.isVariant,
-                        basePrice = first.basePrice,
-                        quantity = quantity,
-                        itemSubtotal = subtotal,
-                        taxRate = first.taxRate,
-                        taxType = first.taxType,
-                        taxAmountPerItem = taxPerItem,
-                        taxTotal = taxTotalItem,
-                        note = first.note,
-                        modifiersJson = first.modifiersJson,
-                        finalPricePerItem = first.basePrice + taxPerItem,
-                        finalTotal = subtotal + taxTotalItem,
-                        createdAt = now
-                    )
-                }
+                         PosOrderItemEntity(
+                            id = UUID.randomUUID().toString(),
 
-            withContext(Dispatchers.IO) {
+                            // 🔹 SNAPSHOT CATEGORY NAME (enterprise safe)
+                            categoryName = first.categoryName,
+
+                            orderMasterId = orderId,
+                            productId = first.productId,
+
+                            name = first.name,
+                            categoryId = first.categoryId,
+
+                            parentId = first.parentId,
+                            isVariant = first.isVariant,
+
+                            basePrice = first.basePrice,
+                            quantity = quantity,
+                            itemSubtotal = subtotal,
+
+                            // 🔹 Currency snapshot (important for audit)
+                            currency = _currencySymbol.value,
+
+                            // 🔹 Payment snapshot (do NOT rely on join later)
+                            paymentStatus = paymentStatus,
+
+                            taxRate = first.taxRate,
+                            taxType = first.taxType,
+
+                            taxAmountPerItem = taxPerItem,
+                            taxTotal = taxTotalItem,
+
+                            note = first.note,
+                            modifiersJson = first.modifiersJson,
+
+                            finalPricePerItem = first.basePrice + taxPerItem,
+                            finalTotal = subtotal + taxTotalItem,
+
+                            createdAt = now
+                        )
+                    }
+
+
+                withContext(Dispatchers.IO) {
 
                 orderMasterDao.insert(orderMaster)
                 orderProductDao.insertAll(orderItems)
@@ -535,14 +622,32 @@ class BillViewModel(
             }
 
             printOrder(orderMaster, orderItems)
+                sendEvent("Payment successful")
 
             resetBillUi()
+            } catch (e: Exception) {
+                Log.e("PAY_ERROR", "Payment failed", e)
+                sendEvent("Payment failed")
+            } finally {
+                _isProcessing.value = false
+            }
+
+        }
+    }
+
+    fun deleteItem(itemId: String) {
+        viewModelScope.launch {
+            try {
+                kotItemDao.deleteItemById(itemId)   // 👈 use internal tableId
+                kotRepository.syncBillCount(tableId)         // 👈 update table status here
+            } catch (e: Exception) {
+                Log.e("DELETE", "Failed to delete item", e)
+            }
         }
     }
 
 
-
-    fun deleteItem(itemId: String) {
+    fun deleteItem1(itemId: String) {
         viewModelScope.launch {
             try {
                 kotItemDao.deleteItemById(itemId)
@@ -555,6 +660,10 @@ class BillViewModel(
             } catch (e: Exception) {
                 Log.e("DELETE", "Failed to delete item", e)
             }
+          //  kotRepository.syncBillCount(tableNo)
+//            repository.updateTableStatusOnDelete
+//            kotRepository.syncKinchenCount(tableNo)
+//            kotRepository.syncBillCount(tableNo)
         }
     }
     // --------------------------------------------------------

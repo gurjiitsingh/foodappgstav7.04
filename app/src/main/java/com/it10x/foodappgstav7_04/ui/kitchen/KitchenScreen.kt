@@ -158,34 +158,34 @@ fun KitchenScreen(
                 }
 
                 // 🔹 Generate Bill
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                    onClick = {
-
-                        val deviceId = Settings.Secure.getString(
-                            context.contentResolver,
-                            Settings.Secure.ANDROID_ID
-                        )
-                        kitchenViewModel.cartToBIll_KitchenNoPrint(
-                            orderType = orderType,
-                            tableNo = tableNo,
-                            sessionId = sessionId,
-                            paymentType = "UNPAID",
-                            deviceId = deviceId,
-                            deviceName = Build.MODEL ?: "Unknown Device",
-                            appVersion = BuildConfig.VERSION_NAME
-                        )
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Receipt,
-                        contentDescription = "Bill",
-                        tint = Color.White
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text("Send all to Bill", color = Color.White)
-                }
+//                Button(
+//                    modifier = Modifier.fillMaxWidth(),
+//                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+//                    onClick = {
+//
+//                        val deviceId = Settings.Secure.getString(
+//                            context.contentResolver,
+//                            Settings.Secure.ANDROID_ID
+//                        )
+//                        kitchenViewModel.cartToBIll_KitchenNoPrint(
+//                            orderType = orderType,
+//                            tableNo = tableNo,
+//                            sessionId = sessionId,
+//                            paymentType = "UNPAID",
+//                            deviceId = deviceId,
+//                            deviceName = Build.MODEL ?: "Unknown Device",
+//                            appVersion = BuildConfig.VERSION_NAME
+//                        )
+//                    }
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Default.Receipt,
+//                        contentDescription = "Bill",
+//                        tint = Color.White
+//                    )
+//                    Spacer(Modifier.width(6.dp))
+//                    Text("Send all to Bill", color = Color.White)
+//                }
             }
         }
     }

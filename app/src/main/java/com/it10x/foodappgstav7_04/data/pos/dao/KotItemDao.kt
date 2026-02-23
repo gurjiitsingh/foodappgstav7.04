@@ -100,6 +100,8 @@ AND status = 'PENDING'
     @Query("SELECT * FROM pos_kot_items ORDER BY createdAt ASC")
     fun getAllKotItems(): Flow<List<PosKotItemEntity>>
 
+    @Query("SELECT * FROM pos_kot_items")
+    fun getAllKotItems1(): Flow<List<PosKotItemEntity>>
 
     @Query("SELECT quantity FROM pos_kot_items WHERE productId = :itemId LIMIT 1")
     suspend fun getItemQtyById(itemId: String): Int?
@@ -281,6 +283,8 @@ WHERE tableNo = :tableNo AND status = 'DONE'
     suspend fun billAmountForTableIncludingKitchen(tableNo: String): Double
 
 
+    @Query("SELECT COUNT(*) > 0 FROM pos_kot_items WHERE id = :orderId")
+    suspend fun isOrderAlreadyProcessed(orderId: String): Boolean
 
 
 }

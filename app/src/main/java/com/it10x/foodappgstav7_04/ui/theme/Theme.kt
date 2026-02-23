@@ -123,7 +123,7 @@ fun FoodPosTheme(
         PosThemeMode.GSTA -> {
 
             PosTheme.accent = PosAccentColors(
-                cartAddBg = Color(0xFFF97316),        // 🟠 Orange (Add button)
+                cartAddBg = Color(0xFFDC2626),        // 🟠 Red (Add button)
                 cartAddText = Color.White,            // ⚪ White text
                 cartRemoveBorder = Color(0xFFF97316), // 🟠 Orange border
                 cartRemoveText = Color(0xFFF97316)    // 🟠 Orange text
@@ -137,7 +137,7 @@ fun FoodPosTheme(
             darkColorScheme(
                 primary = Color.White,
                 onPrimary = Color.Black,
-                background = Color(0xFF111111),       // ⚫ Almost black background
+                background = Color(0xFF0F172A),       // 🔵 Dark blue background
                 onBackground = Color.White,
                 surface = Color(0xFF1C1C1C),
                 onSurface = Color.White,

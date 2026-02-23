@@ -81,7 +81,8 @@ data class OrderMasterData(
     // =====================================================
     // TIMESTAMPS
     // =====================================================
-    var createdAt: Timestamp? = null,
+  //  var createdAt: Timestamp? = null,
+    val createdAt: Any? = null,
     var localCreatedAt: Long? = null,
     // =====================================================
     // AUTOMATION
@@ -107,24 +108,31 @@ data class OrderMasterData(
 
 
 
-// Extension to get milliseconds from Firestore Timestamp
-fun OrderMasterData.createdAtMillis(): Long {
-    return createdAt?.toDate()?.time ?: 0L
-}
+
 
 // Extension to format timestamp for printing
 fun OrderMasterData.formattedTime(): String {
     val millis = createdAtMillis()
+    if (millis == 0L) return "--"
+
     val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.getDefault())
     return sdf.format(Date(millis))
 }
 
 
 
-fun OrderMasterData.safeCreatedAtMillis(): Long =
-    createdAt?.toDate()?.time
-        ?: localCreatedAt
-        ?: 0L
+fun OrderMasterData.createdAtMillis(): Long {
+    return when (val value = createdAt) {
+        is Timestamp -> value.toDate().time
+        is Long -> value
+        is Double -> value.toLong()
+        else -> localCreatedAt ?: 0L
+    }
+}
+
+
+
+
 
 
 

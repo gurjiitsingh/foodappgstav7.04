@@ -2,13 +2,15 @@ package com.it10x.foodappgstav7_04.ui.orders.local
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.it10x.foodappgstav7_04.data.PrinterRole
 import com.it10x.foodappgstav7_04.data.pos.entities.PosOrderItemEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosOrderMasterEntity
 import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository
+import com.it10x.foodappgstav7_04.data.pos.viewmodel.POSOrdersViewModel
 import com.it10x.foodappgstav7_04.printer.PrinterManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-
+import com.it10x.foodappgstav7_04.printer.PosReceiptBuilder
 class LocalOrderDetailViewModel(
     private val orderId: String,
     private val repository: POSOrdersRepository,
@@ -25,18 +27,18 @@ class LocalOrderDetailViewModel(
     val subtotal = products.map { it.sumOf { p -> p.itemSubtotal } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)
 
-    val taxTotal = products.map { it.sumOf { p -> p.taxTotal } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)
 
     val discount = orderInfo
         .map { it?.discountTotal ?: 0.0 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)
 
-    val grandTotal = combine(products, discount) { items, discount ->
-        val total = items.sumOf { it.finalTotal }
-        (total - discount).coerceAtLeast(0.0)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)
+    val taxTotal = orderInfo
+        .map { it?.taxTotal ?: 0.0 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)
 
+    val grandTotal = orderInfo
+        .map { it?.grandTotal ?: 0.0 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)
 
     val totalPaid = orderInfo
         .map { it?.paidAmount ?: 0.0 }

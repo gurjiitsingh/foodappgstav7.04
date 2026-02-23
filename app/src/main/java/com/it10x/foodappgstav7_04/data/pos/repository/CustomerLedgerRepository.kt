@@ -3,6 +3,8 @@ package com.it10x.foodappgstav7_04.data.pos.repository
 import android.util.Log
 import androidx.room.withTransaction
 import com.it10x.foodappgstav7_04.data.pos.AppDatabase
+import com.it10x.foodappgstav7_04.data.pos.dao.PosCustomerDao
+import com.it10x.foodappgstav7_04.data.pos.dao.PosCustomerLedgerDao
 import com.it10x.foodappgstav7_04.data.pos.entities.PosCustomerLedgerEntity
 import java.util.*
 

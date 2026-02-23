@@ -15,7 +15,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Print
-import com.it10x.foodappgstav7_04.data.online.models.safeCreatedAtMillis
+import com.it10x.foodappgstav7_04.data.online.models.createdAtMillis
+
+//import com.it10x.foodappgstav7_04.data.online.models.safeCreatedAtMillis
 
 @Composable
 fun OnlineOrderTableRow(
@@ -75,7 +77,7 @@ fun OnlineOrderTableRow(
 
         // Time
         Text(
-            text = formatPosTime(order.safeCreatedAtMillis()),
+            text = formatPosTime(order.createdAtMillis()),
             modifier = Modifier.weight(0.20f),
             style = MaterialTheme.typography.bodySmall
         )
@@ -101,7 +103,4 @@ private fun formatPosTime(timestamp: Long): String {
     if (timestamp == 0L) return "-"
     val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
     return sdf.format(Date(timestamp))
-}
-fun OrderMasterData.createdAtMillis(): Long {
-    return createdAt?.toDate()?.time ?: 0L
 }

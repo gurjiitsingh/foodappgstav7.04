@@ -2,6 +2,7 @@ package com.it10x.foodappgstav7_04.ui.orders.local
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.it10x.foodappgstav7_04.data.pos.viewmodel.POSOrdersViewModel
 import com.it10x.foodappgstav7_04.printer.PrinterManager
 
 import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository

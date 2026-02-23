@@ -1,5 +1,6 @@
 package com.it10x.foodappgstav7_04.printer
 
+import com.it10x.foodappgstav7_04.data.pos.entities.PosCartEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosOrderItemEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosOrderMasterEntity
 import java.text.SimpleDateFormat

@@ -40,7 +40,7 @@ data class ProductEntity(
     // CATEGORY
     // =====================================================
     val categoryId: String,
-    val productCat: String?,
+    val productCat: String,
 
     // =====================================================
     // VARIANT RELATION (MOST IMPORTANT)

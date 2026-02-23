@@ -9,6 +9,7 @@ import com.it10x.foodappgstav7_04.data.pos.entities.TableEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import com.it10x.foodappgstav7_04.data.pos.repository.TableRepository
 
 object TableStatus {
 
@@ -23,18 +24,25 @@ object TableStatus {
 
 class PosTableViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val dao = AppDatabaseProvider.get(app).tableDao()
-
+    // ✅ FIRST — StateFlow
     private val _tables = MutableStateFlow<List<TableUiState>>(emptyList())
     val tables: StateFlow<List<TableUiState>> = _tables
 
+    // ✅ THEN dao
+    private val dao = AppDatabaseProvider.get(app).tableDao()
     private val orderDao = AppDatabaseProvider.get(app).orderMasterDao()
-
-
-
+    private val repository = TableRepository(dao)
 
     private val kotItemDao =
         AppDatabaseProvider.get(app).kotItemDao()
+
+    // ✅ ONLY ONE init
+    init {
+        observeTables()
+    }
+
+
+
 
     data class TableUiState(
         val table: TableEntity,
@@ -54,6 +62,8 @@ class PosTableViewModel(app: Application) : AndroidViewModel(app) {
         GREEN,
         RED
     }
+
+
 
     private fun observeTables() {
         viewModelScope.launch {
@@ -77,14 +87,12 @@ class PosTableViewModel(app: Application) : AndroidViewModel(app) {
                     )
                 }
 
-                _tables.value = uiList
+                _tables.emit(uiList)
             }
         }
     }
 
-    init {
-        observeTables()
-    }
+
 
     fun loadTables() {
         viewModelScope.launch {
@@ -115,7 +123,7 @@ class PosTableViewModel(app: Application) : AndroidViewModel(app) {
                 }
 
 
-                _tables.value = uiList
+                _tables.emit(uiList)
 
             } catch (e: Exception) {
                 _tables.value = emptyList()
@@ -184,6 +192,12 @@ class PosTableViewModel(app: Application) : AndroidViewModel(app) {
             if (table.status != TableStatus.ORDERING) return@launch
             dao.updateStatus(tableNo, TableStatus.AVAILABLE)
            // loadTables()
+        }
+    }
+
+    fun syncTablesFromCloud() {
+        viewModelScope.launch {
+            repository.syncFromFirestore()
         }
     }
 

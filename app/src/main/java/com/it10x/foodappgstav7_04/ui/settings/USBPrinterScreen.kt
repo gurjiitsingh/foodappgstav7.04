@@ -1,5 +1,8 @@
 package com.it10x.foodappgstav7_04.ui.settings
 
+import android.content.Context
+import android.hardware.usb.UsbDevice
+import android.hardware.usb.UsbManager
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

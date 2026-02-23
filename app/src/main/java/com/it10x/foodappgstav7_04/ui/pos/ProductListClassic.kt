@@ -1,4 +1,4 @@
-package com.it10x.foodappgstav7_04.ui.pos
+package com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.pos
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -20,6 +20,7 @@ import com.it10x.foodappgstav7_04.data.pos.entities.ProductEntity
 import com.it10x.foodappgstav7_04.ui.cart.CartViewModel
 import com.it10x.foodappgstav7_04.ui.pos.PosSessionViewModel
 import com.it10x.foodappgstav7_04.ui.pos.toTitleCase
+import com.it10x.foodappgstav7_04.ui.theme.*
 import com.it10x.foodappgstav7_04.viewmodel.PosTableViewModel
 
 @Composable
@@ -192,6 +193,7 @@ private fun ParentProductCard(
                                 parentId = null,
                                 isVariant = false,
                                 categoryId = product.categoryId,
+                                categoryName = product.productCat,
                                 sessionId = sessionId,
                                 tableId = tableNo
                             )

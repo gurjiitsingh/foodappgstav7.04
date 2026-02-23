@@ -2,6 +2,7 @@ package com.it10x.foodappgstav7_04.data
 
 import android.content.Context
 import android.hardware.usb.UsbManager
+import com.it10x.foodappgstav7_04.data.PrinterConfig
 import com.it10x.foodappgstav7_04.printer.PaperSize
 
 

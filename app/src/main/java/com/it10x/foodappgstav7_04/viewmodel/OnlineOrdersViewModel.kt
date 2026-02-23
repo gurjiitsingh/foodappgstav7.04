@@ -6,13 +6,20 @@ import androidx.lifecycle.viewModelScope
 import com.it10x.foodappgstav7_04.data.PrinterRole
 import com.it10x.foodappgstav7_04.data.online.models.OrderMasterData
 import com.it10x.foodappgstav7_04.data.online.models.OrderProductData
+import com.it10x.foodappgstav7_04.data.online.models.formattedTime
 import com.it10x.foodappgstav7_04.data.online.models.repository.OrdersRepository
 import com.it10x.foodappgstav7_04.printer.PrinterManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import com.it10x.foodappgstav7_04.printer.FirestorePrintMapper
+import com.it10x.foodappgstav7_04.printer.ReceiptFormatter
+import com.it10x.foodappgstav7_04.data.pos.AppDatabaseProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.it10x.foodappgstav7_04.data.mapper.OnlineOrderMapper
+import com.it10x.foodappgstav7_04.data.online.models.createdAtMillis
+
 class OnlineOrdersViewModel(
     private val printerManager: PrinterManager
 ) : ViewModel() {
@@ -88,8 +95,8 @@ fun loadFirstPage() {
 
         pageIndex.value = 0
 
-        _orders.value = repo.getFirstPage(limit.toLong())
-            .sortedByDescending { it.createdAt?.seconds ?: 0L }
+        _orders.value = repo.getNextPage(limit.toLong())
+            .sortedByDescending { it.createdAtMillis() }
 
         _loading.value = false
     }
@@ -102,7 +109,7 @@ fun loadNextPage() {
         pageIndex.value++
 
         _orders.value = repo.getNextPage(limit.toLong())
-            .sortedByDescending { it.createdAt?.seconds ?: 0L }
+            .sortedByDescending { it.createdAtMillis() }
 
         _loading.value = false
     }
@@ -115,8 +122,8 @@ fun loadPrevPage() {
         if (pageIndex.value > 0)
             pageIndex.value--
 
-        _orders.value = repo.getPrevPage(limit.toLong())
-            .sortedByDescending { it.createdAt?.seconds ?: 0L }
+        _orders.value = repo.getNextPage(limit.toLong())
+            .sortedByDescending { it.createdAtMillis() }
 
         _loading.value = false
     }

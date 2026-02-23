@@ -1,4 +1,6 @@
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +19,7 @@ fun ThemeSettingsScreen(vm: ThemeViewModel = viewModel()) {
     Column(
         Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -24,8 +27,6 @@ fun ThemeSettingsScreen(vm: ThemeViewModel = viewModel()) {
         Text("Theme Settings", style = MaterialTheme.typography.titleLarge)
 
         Divider()
-
-        Text("Theme Mode", style = MaterialTheme.typography.titleMedium)
 
         Text("Theme Mode", style = MaterialTheme.typography.titleMedium)
 
@@ -51,6 +52,6 @@ fun ThemeSettingsScreen(vm: ThemeViewModel = viewModel()) {
                 Text(mode.name)
             }
         }
-
     }
 }
+

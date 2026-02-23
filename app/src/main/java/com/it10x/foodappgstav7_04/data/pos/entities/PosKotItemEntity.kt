@@ -19,7 +19,7 @@ data class PosKotItemEntity(
 
     @PrimaryKey
     val id: String,
-
+    val categoryName: String,
     val sessionId: String?,             // groups table visit
     val kotBatchId: String,
 

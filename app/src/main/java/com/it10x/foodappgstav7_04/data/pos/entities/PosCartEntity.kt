@@ -22,6 +22,7 @@ data class PosCartEntity(
     val productId: String,
     val name: String,
     val categoryId: String,
+    val categoryName: String,
     val parentId: String?,
     val isVariant: Boolean,
 

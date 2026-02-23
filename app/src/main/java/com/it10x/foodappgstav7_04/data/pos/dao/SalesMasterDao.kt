@@ -86,14 +86,35 @@ interface SalesMasterDao {
         from: Long,
         to: Long
     ): TaxDiscountSummary
+
+    @Query("""
+SELECT categoryId, SUM(finalTotal) as total
+FROM pos_order_items
+WHERE createdAt BETWEEN :from AND :to
+GROUP BY categoryId
+""")
+    suspend fun getCategorySales(from: Long, to: Long): List<CategorySaleRaw>
+
+
+
+    @Query("""
+    SELECT * FROM pos_order_master
+    WHERE paymentStatus = 'PAID'
+    AND createdAt BETWEEN :from AND :to
+""")
+    suspend fun getPaidOrdersBetween(
+        from: Long,
+        to: Long
+    ): List<PosOrderMasterEntity>
 }
-
-
+data class CategorySaleRaw(
+    val categoryId: String,
+    val total: Double
+)
 data class PaymentBreakup(
     val paymentMode: String,
     val total: Double
 )
-
 data class TaxDiscountSummary(
     val taxTotal: Double,
     val discountTotal: Double

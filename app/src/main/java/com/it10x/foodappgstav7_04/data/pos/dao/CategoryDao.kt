@@ -2,6 +2,7 @@ package com.it10x.foodappgstav7_04.data.pos.dao
 
 import androidx.room.*
 import com.it10x.foodappgstav7_04.data.pos.entities.CategoryEntity
+import com.it10x.foodappgstav7_04.data.pos.entities.PosCartEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

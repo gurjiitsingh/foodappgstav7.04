@@ -4,7 +4,10 @@ package com.it10x.foodappgstav7_04.ui.sales
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.it10x.foodappgstav7_04.data.pos.dao.OrderProductDao
 import com.it10x.foodappgstav7_04.data.pos.dao.SalesMasterDao
+import com.it10x.foodappgstav7_04.data.pos.dao.PaymentBreakup
+import com.it10x.foodappgstav7_04.data.pos.dao.TaxDiscountSummary
 import com.it10x.foodappgstav7_04.data.pos.entities.PosOrderMasterEntity
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -12,7 +15,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class SalesViewModel(
-    private val salesMasterDao: SalesMasterDao
+    private val salesMasterDao: SalesMasterDao,
+    private val orderProductDao: OrderProductDao
 ) : ViewModel() {
 
     companion object {
@@ -35,59 +39,58 @@ class SalesViewModel(
         refreshSales()
     }
 
-//    fun refreshSales() {
-//        viewModelScope.launch {
-//            _uiState.value = _uiState.value.copy(isLoading = true)
-//
-//            val from = _fromDate.value
-//            val to = _toDate.value
-//
-//            Log.i(TAG, "refreshSales() called with from=$from, to=$to")
-//
-//            val salesFlow: Flow<List<PosOrderMasterEntity>> = salesMasterDao.getSales(from, to)
-//            val sales = salesFlow.first()
-//
-//            Log.i(TAG, "Filtered sales count=${sales.size}")
-//
-//            val total = salesMasterDao.getTotalSales(from, to)
-//            val payment = salesMasterDao.getPaymentBreakup(from, to)
-//            val taxDiscount = salesMasterDao.getTaxDiscountSummary(from, to)
-//
-//            _uiState.value = SalesUiState(
-//                isLoading = false,
-//                orders = sales,
-//                totalSales = total,
-//                taxTotal = taxDiscount.taxTotal,
-//                discountTotal = taxDiscount.discountTotal,
-//                paymentBreakup = payment.associate { it.paymentType to it.total },
-//                from = from,
-//                to = to
-//            )
-//
-//            Log.i(TAG, "Total sales=$total, Tax=${taxDiscount.taxTotal}, Discount=${taxDiscount.discountTotal}")
-//        }
-//    }
-
 
     fun refreshSales() {
         viewModelScope.launch {
+
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            // ==========================
-            // TEST MODE: IGNORE DATE RANGE
-            // ==========================
-            Log.i(TAG, "refreshSales() called - TEST MODE: ignoring time range")
+            val from = _fromDate.value
+            val to = _toDate.value
 
-            val salesFlow: Flow<List<PosOrderMasterEntity>> = salesMasterDao.getAllPaidOrders() // fetch all paid
-            val sales = salesFlow.first()
+            val sales = salesMasterDao
+                .getPaidOrdersBetween(from, to)
 
-            Log.i(TAG, "All PAID orders count=${sales.size}")
-
-            val total = sales.sumOf { it.grandTotal }               // simple total
-            val paymentBreakup = sales.groupBy { it.paymentMode }
-                .mapValues { it.value.sumOf { o -> o.grandTotal } }
+            val total = sales.sumOf { it.grandTotal }
             val taxTotal = sales.sumOf { it.taxTotal }
             val discountTotal = sales.sumOf { it.discountTotal }
+
+            val paymentBreakup = sales.groupBy { it.paymentMode }
+                .mapValues { it.value.sumOf { o -> o.grandTotal } }
+
+            // ---------------- CATEGORY SALES ----------------
+            val categoryResults =
+                orderProductDao.getCategorySalesBetween(from, to)
+
+            val categorySales = categoryResults.associate {
+                it.categoryName to it.total
+            }
+
+            // ---------------- ITEM SALES ----------------
+            val itemResults =
+                orderProductDao.getItemSalesBetween(from, to)
+
+            val itemSales = itemResults
+                .groupBy { it.categoryName }
+                .mapValues { entry ->
+                    entry.value.associate { it.itemName to it.total }
+                }
+
+            // ---------------- GROUPED TOTALS ----------------
+            val beveragesTotal = categorySales
+                .filterKeys { it.equals("Beverages", true) }
+                .values.sum()
+
+            val wineTotal = categorySales
+                .filterKeys { it.equals("Wine", true) }
+                .values.sum()
+
+            val foodTotal = categorySales
+                .filterKeys {
+                    !it.equals("Beverages", true) &&
+                            !it.equals("Wine", true)
+                }
+                .values.sum()
 
             _uiState.value = SalesUiState(
                 isLoading = false,
@@ -95,12 +98,83 @@ class SalesViewModel(
                 totalSales = total,
                 taxTotal = taxTotal,
                 discountTotal = discountTotal,
-                paymentBreakup = paymentBreakup
+                paymentBreakup = paymentBreakup,
+                categorySales = categorySales,
+                itemSales = itemSales,   // ✅ IMPORTANT
+                foodTotal = foodTotal,
+                beveragesTotal = beveragesTotal,
+                wineTotal = wineTotal,
+                from = from,
+                to = to
             )
 
-            Log.i(TAG, "Total sales=$total, Tax=$taxTotal, Discount=$discountTotal")
         }
     }
+
+
+
+
+//    fun refreshSales() {
+//        viewModelScope.launch {
+//
+//            _uiState.value = _uiState.value.copy(isLoading = true)
+//
+//            val from = _fromDate.value
+//            val to = _toDate.value
+//
+//            val sales = salesMasterDao
+//                .getPaidOrdersBetween(from, to)
+//
+//
+//            val total = sales.sumOf { it.grandTotal }
+//            val taxTotal = sales.sumOf { it.taxTotal }
+//            val discountTotal = sales.sumOf { it.discountTotal }
+//
+//            val paymentBreakup = sales.groupBy { it.paymentMode }
+//                .mapValues { it.value.sumOf { o -> o.grandTotal } }
+//
+//            // ✅ CATEGORY SALES WITH NAME
+//            val categoryResults =
+//                orderProductDao.getCategorySalesBetween(from, to)
+//
+//            val categorySales = categoryResults.associate {
+//                it.categoryName to it.total
+//            }
+//
+//            val beveragesTotal = categorySales
+//                .filterKeys { it.equals("Beverages", true) }
+//                .values.sum()
+//
+//            val wineTotal = categorySales
+//                .filterKeys { it.equals("Wine", true) }
+//                .values.sum()
+//
+//            val foodTotal = categorySales
+//                .filterKeys {
+//                    !it.equals("Beverages", true) &&
+//                            !it.equals("Wine", true)
+//                }
+//                .values.sum()
+//
+//
+//            data class SalesUiState(
+//                val categorySales: Map<String, Double> = emptyMap(),
+//                val itemSales: Map<String, Map<String, Double>> = emptyMap(), // ✅ NEW
+//                val orders: List<PosOrderMasterEntity> = emptyList(),
+//                val totalSales: Double = 0.0,
+//                val taxTotal: Double = 0.0,
+//                val discountTotal: Double = 0.0,
+//                val paymentBreakup: Map<String, Double> = emptyMap(),
+//                val from: Long = 0L,  // ✅ NEW
+//                val to: Long = 0L,    // ✅ NEW
+//                val isLoading: Boolean = true,
+//                val foodTotal: Double = 0.0,
+//                val beveragesTotal: Double = 0.0,
+//                val wineTotal: Double = 0.0,
+//            )
+//
+//        }
+//    }
 
 
 
@@ -124,46 +198,7 @@ class SalesViewModel(
         calendar.set(Calendar.MILLISECOND, 999)
         return calendar.timeInMillis
     }
-//    fun startOfToday(): Long {
-//        val calendar = Calendar.getInstance()
-//        calendar.set(Calendar.HOUR_OF_DAY, 0)
-//        calendar.set(Calendar.MINUTE, 0)
-//        calendar.set(Calendar.SECOND, 0)
-//        calendar.set(Calendar.MILLISECOND, 0)
-//        return calendar.timeInMillis
-//    }
-//
-//    fun endOfToday(): Long {
-//        val calendar = Calendar.getInstance()
-//        calendar.set(Calendar.HOUR_OF_DAY, 23)
-//        calendar.set(Calendar.MINUTE, 59)
-//        calendar.set(Calendar.SECOND, 59)
-//        calendar.set(Calendar.MILLISECOND, 999)
-//        return calendar.timeInMillis
-//    }
 
-    fun formatDate(ts: Long): String {
-        val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-        return sdf.format(Date(ts))
-    }
 
-    fun startOfMonth(): Long {
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.DAY_OF_MONTH, 1)
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        return calendar.timeInMillis
-    }
 
-    fun endOfMonth(): Long {
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH))
-        calendar.set(Calendar.HOUR_OF_DAY, 23)
-        calendar.set(Calendar.MINUTE, 59)
-        calendar.set(Calendar.SECOND, 59)
-        calendar.set(Calendar.MILLISECOND, 999)
-        return calendar.timeInMillis
-    }
 }

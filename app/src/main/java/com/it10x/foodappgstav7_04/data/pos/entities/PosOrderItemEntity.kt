@@ -9,7 +9,11 @@ import androidx.room.PrimaryKey
     indices = [
         Index(value = ["orderMasterId"]),
         Index(value = ["productId"]),
-        Index(value = ["parentId"])
+        Index(value = ["parentId"]),
+        Index(value = ["createdAt"]),
+        Index(value = ["categoryName"]),
+        Index(value = ["paymentStatus"]),
+        Index(value = ["paymentStatus", "createdAt"])
     ]
 )
 data class PosOrderItemEntity(
@@ -19,7 +23,7 @@ data class PosOrderItemEntity(
     // =====================================================
     @PrimaryKey
     val id: String,                  // UUID (generated on POS)
-
+    val categoryName: String,
     val orderMasterId: String,       // FK → pos_order_master.id
     val productId: String,           // Original product ID (Firestore)
 
@@ -41,7 +45,8 @@ data class PosOrderItemEntity(
     val basePrice: Double,           // Price before tax (single item)
     val quantity: Int,
     val itemSubtotal: Double,        // basePrice * quantity
-
+    val currency: String?,
+    val paymentStatus: String?,
     // =====================================================
     // TAX SNAPSHOT (FINAL)
     // =====================================================

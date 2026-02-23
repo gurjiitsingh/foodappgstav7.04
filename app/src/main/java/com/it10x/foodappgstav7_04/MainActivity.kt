@@ -28,6 +28,7 @@ import com.it10x.foodappgstav7_04.printer.AutoPrintManager
 import com.it10x.foodappgstav7_04.service.OrderListenerService
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,14 +53,102 @@ import com.it10x.foodappgstav7_04.ui.theme.PosThemeMode
 
 import com.it10x.foodappgstav7_04.viewmodel.ThemeViewModel
 
+import com.google.firebase.firestore.FirebaseFirestore
+import com.it10x.foodappgstav7_04.data.online.sync.GlobalOrderSyncManager
+import com.it10x.foodappgstav7_04.data.pos.AppDatabaseProvider
+import com.it10x.foodappgstav7_04.data.pos.KotProcessor
+import com.it10x.foodappgstav7_04.ui.bill.BillViewModel
+import androidx.activity.viewModels
+import com.it10x.foodappgstav7_04.data.pos.entities.PosCartEntity
+import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository
+import com.it10x.foodappgstav7_04.ui.cart.CartViewModel
+import com.it10x.foodappgstav7_04.ui.cart.CartViewModelFactory
+import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModel
+import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModelFactory
 
 class MainActivity : ComponentActivity() {
+    private lateinit var globalOrderSyncManager: GlobalOrderSyncManager
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 //        val serviceIntent = Intent(this, OrderListenerService::class.java)
 //        startForegroundService(serviceIntent)
+
+
+        // ✅ START GLOBAL WAITER → POS SYNC
+        val firestore = FirebaseFirestore.getInstance()
+        val kotItemDao = AppDatabaseProvider.get(this).kotItemDao()
+        val kotProcessor = KotProcessor(kotItemDao)
+
+// Inject callback from BillViewModel
+        // MainActivity (or wherever BillViewModel exists)
+        // 1️⃣ Get database instance
+        val db = AppDatabaseProvider.get(this)
+
+        val repository = POSOrdersRepository(
+            db = db,
+            orderMasterDao = db.orderMasterDao(),
+            orderProductDao = db.orderProductDao(),
+            cartDao = db.cartDao(),
+            tableDao = db.tableDao()
+        )
+
+        val tableId = "Bar_B_4"
+        val tableName = "Bar B 4"
+        val sessionId = "DINE_IN-Bar_B_4-1771777223369"
+        val orderType = "DINE_IN"
+
+        val kitchenFactory = KitchenViewModelFactory(
+            app = application,
+            tableId = tableId,
+            tableName = tableName,
+            sessionId = sessionId,
+            orderType = orderType,
+            repository = repository
+        )
+
+        val kitchenVM: KitchenViewModel by viewModels { kitchenFactory }
+
+
+        globalOrderSyncManager = GlobalOrderSyncManager(
+            firestore = firestore,
+            kotProcessor = kotProcessor,
+            onWaiterOrderReceived = { orderId, tableNo, sessionId, items ->
+                // Convert each PosKotItemEntity → PosCartEntity
+                val cartItems: List<PosCartEntity> = items.map { kotItem ->
+                    PosCartEntity(
+                        productId = kotItem.productId,
+                        name = kotItem.name,
+                        categoryId = kotItem.categoryId,
+                        categoryName = kotItem.categoryName,
+                        parentId = kotItem.parentId,
+                        isVariant = kotItem.isVariant,
+                        basePrice = kotItem.basePrice,
+                        quantity = kotItem.quantity,
+                        taxRate = kotItem.taxRate,
+                        taxType = kotItem.taxType,
+                        sessionId = sessionId,          // 🔑 required
+                        tableId = tableNo,              // 🔑 required for DINE_IN
+                        note = kotItem.note,
+                        modifiersJson = kotItem.modifiersJson,
+                        sentToKitchen = true,           // mark as sent
+                        createdAt = kotItem.createdAt   // preserve original timestamp
+                    )
+                }
+
+
+                kitchenVM.waiterOrderToKitchen(
+                    orderType = "DINE_IN",
+                    tableNo = tableNo,
+                    sessionId = sessionId,
+                    items = cartItems, // ✅ now correct type
+                    deviceId = "WAITER",
+                    deviceName = "WAITER_DEVICE"
+                )
+            }
+        )
+        globalOrderSyncManager.startListening()
 
 
 
@@ -202,6 +292,13 @@ class MainActivity : ComponentActivity() {
                                     thickness = 0.5.dp
                                 )
 
+                                Divider(
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                        .padding(bottom = 4.dp),
+                                    thickness = 0.5.dp
+                                )
+
                                 NavigationDrawerItem(
                                     label = { Text("Waiter") },
                                     selected = false,
@@ -211,13 +308,6 @@ class MainActivity : ComponentActivity() {
                                             popUpTo("posWaiter") { inclusive = true }
                                         }
                                     }
-                                )
-
-                                Divider(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(bottom = 4.dp),
-                                    thickness = 0.5.dp
                                 )
 
                                 NavigationDrawerItem(

@@ -15,13 +15,13 @@ class KitchenViewModelFactory(
     private val sessionId: String,
     private val orderType: String,
     private val repository: POSOrdersRepository,
-    private val cartViewModel: CartViewModel,
+
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(KitchenViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return KitchenViewModel(app, tableId, tableName, sessionId, orderType, repository, cartViewModel ) as T
+            return KitchenViewModel(app, tableId, tableName, sessionId, orderType, repository ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

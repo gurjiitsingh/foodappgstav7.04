@@ -3,18 +3,25 @@ package com.it10x.foodappgstav7_04.data.pos.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.it10x.foodappgstav7_04.data.pos.entities.PosCartEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosOrderItemEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosOrderMasterEntity
 import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository
 import com.it10x.foodappgstav7_04.printer.PrintOrderBuilder
 import com.it10x.foodappgstav7_04.printer.PrinterManager
 import com.it10x.foodappgstav7_04.data.PrinterRole
+import com.it10x.foodappgstav7_04.data.mapper.OnlineOrderMapper
 import com.it10x.foodappgstav7_04.data.mapper.PosOrderToKotMapper
+import com.it10x.foodappgstav7_04.printer.ReceiptFormatter
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.it10x.foodappgstav7_04.data.pos.AppDatabaseProvider
+import com.it10x.foodappgstav7_04.data.pos.entities.PosKotBatchEntity
+import com.it10x.foodappgstav7_04.data.pos.entities.PosKotItemEntity
+import com.it10x.foodappgstav7_04.data.print.OutletMapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 // 🔹 NEW (for atomic order no + API 24 safe date)
@@ -57,9 +64,9 @@ class POSOrdersViewModel(
             pageIndex.value = page
             val offset = page * limit
             val pagedOrders = repository.getPagedOrders(limit, offset)
-            pagedOrders.forEach {
-                Log.d("ORDER_SRNO", "Loaded order id=${it.id} srno=${it.srno}")
-            }
+//            pagedOrders.forEach {
+//                Log.d("ORDER_SRNO", "Loaded order id=${it.id} srno=${it.srno}")
+//            }
 
             _orders.value = pagedOrders.sortedByDescending { it.createdAt }
             _loading.value = false
@@ -168,10 +175,10 @@ if(role == "bill") {
                     return@launch
                 }
 
-                Log.d(
-                    "ORDER_SRNO",
-                    "Printing orderId=$orderId srno=${order.srno} items=${items.size}"
-                )
+//                Log.d(
+//                    "ORDER_SRNO",
+//                    "Printing orderId=$orderId srno=${order.srno} items=${items.size}"
+//                )
 
     printOrderStandard(order, items, role)
 

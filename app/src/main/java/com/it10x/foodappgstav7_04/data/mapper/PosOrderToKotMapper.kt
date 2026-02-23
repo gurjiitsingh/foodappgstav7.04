@@ -35,6 +35,7 @@ object PosOrderToKotMapper {
                 tableNo = tableNo ?: "POS",
 
                 productId = item.productId,
+                categoryName = item.categoryName,
                 name = item.name,
                 categoryId = item.categoryId,
 

@@ -1,5 +1,6 @@
 package com.it10x.foodappgstav7_04.data.pos.repository
 
+import android.util.Log
 import com.it10x.foodappgstav7_04.data.pos.dao.KotBatchDao
 import com.it10x.foodappgstav7_04.data.pos.dao.KotItemDao
 import com.it10x.foodappgstav7_04.data.pos.dao.TableDao
@@ -47,15 +48,15 @@ class KotRepository(
     }
 
     private suspend fun syncKitchenCount(tableNo: String) {
-      //  Log.d("TABLE_DEBUG", "syncKitchenCount() called for table = $tableNo")
+        Log.d("TABLE_DEBUG", "syncKitchenCount() called for table = $tableNo")
 
         val count = kotItemDao.countKitchenPending(tableNo) ?: 0
 
-      //  Log.d("TABLE_DEBUG", "Kitchen pending count from DB = $count")
+        Log.d("TABLE_DEBUG", "Kitchen pending count from DB = $count")
 
         tableDao.setKitchenCount(tableNo, count)
 
-      //  Log.d("TABLE_DEBUG", "Kitchen count updated in tableDao")
+        Log.d("TABLE_DEBUG", "Kitchen count updated in tableDao")
     }
 
     suspend fun syncBillCount(tableNo: String) {

@@ -3,6 +3,8 @@ package com.it10x.foodappgstav7_04.data.pos.repository
 import android.util.Log
 import com.it10x.foodappgstav7_04.data.pos.AppDatabase
 import com.it10x.foodappgstav7_04.data.pos.dao.CartDao
+import com.it10x.foodappgstav7_04.data.pos.dao.KotBatchDao
+import com.it10x.foodappgstav7_04.data.pos.dao.KotItemDao
 import com.it10x.foodappgstav7_04.data.pos.dao.OrderMasterDao
 import com.it10x.foodappgstav7_04.data.pos.dao.OrderProductDao
 import com.it10x.foodappgstav7_04.data.pos.dao.TableDao
@@ -10,6 +12,9 @@ import com.it10x.foodappgstav7_04.data.pos.entities.PosCartEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosOrderItemEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosOrderMasterEntity
 import kotlinx.coroutines.flow.Flow
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class POSOrdersRepository(
     private val db: AppDatabase, // 🔹 Keep DB reference for KOT or outlet lookups
@@ -108,8 +113,8 @@ class POSOrdersRepository(
         tableDao.setCartCount(tableNo, 0)
 
         // release table
-        tableDao.updateStatus(tableNo, "AVAILABLE")
-        tableDao.setActiveOrder(tableNo, "")
+        //tableDao.updateStatus(tableNo, "AVAILABLE")
+        //tableDao.setActiveOrder(tableNo, "")
     }
 
 

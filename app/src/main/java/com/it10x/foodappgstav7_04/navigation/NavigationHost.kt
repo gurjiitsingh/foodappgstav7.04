@@ -225,7 +225,7 @@ fun NavigationHost(
 
             val cartViewModel: CartViewModel = viewModel(
                 factory = CartViewModelFactory(
-                    repository = CartRepository(
+                        repository = CartRepository(
                         db.cartDao(),
                         db.tableDao()
                     ),
@@ -252,7 +252,7 @@ fun NavigationHost(
 
             val cartViewModel: CartViewModel = viewModel(
                 factory = CartViewModelFactory(
-                    repository = CartRepository(
+                         repository = CartRepository(
                         db.cartDao(),
                         db.tableDao()
                     ),
@@ -271,6 +271,8 @@ fun NavigationHost(
                 posTableViewModel = posTableViewModel
             )
         }
+
+
 
         composable("posWaiter") {
 
@@ -308,7 +310,8 @@ fun NavigationHost(
 
             val salesViewModel: SalesViewModel = viewModel(
                 factory = SalesViewModelFactory(
-                    salesMasterDao = db.salesMasterDao()
+                    salesMasterDao = db.salesMasterDao(),
+                    orderProductDao = db.orderProductDao()   // ✅ added
                 )
             )
 

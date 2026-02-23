@@ -31,13 +31,3 @@ data class CategoryEntity(
 
 
 
-
-//@Entity(tableName = "categories")
-//data class CategoryEntity(
-//    @PrimaryKey val id: String,
-//    val name: String,
-//    val desc: String,
-//    val image: String?,
-//    val taxRate: Double?,
-//    val taxType: String?
-//)

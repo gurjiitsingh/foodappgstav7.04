@@ -4,12 +4,15 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.SoupKitchen
+import androidx.compose.material.icons.filled.Print
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -137,19 +140,19 @@ fun CartRow(
             horizontalArrangement = Arrangement.End
         ) {
 
-            Button(
-                onClick = { onCartActionDirectMoveToBill(item, true) },
-                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Icon(Icons.Default.SoupKitchen, null, Modifier.size(15.dp))
-                Spacer(Modifier.width(2.dp))
-                Icon(Icons.Default.Receipt, null, Modifier.size(15.dp))
-            }
-
-            Spacer(Modifier.width(4.dp))
+//            Button(
+//                onClick = { onCartActionDirectMoveToBill(item, true) },
+//                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp),
+//                colors = ButtonDefaults.buttonColors(
+//                    containerColor = MaterialTheme.colorScheme.primary
+//                )
+//            ) {
+//                Icon(Icons.Default.SoupKitchen, null, Modifier.size(15.dp))
+//                Spacer(Modifier.width(2.dp))
+//                Icon(Icons.Default.Receipt, null, Modifier.size(15.dp))
+//            }
+//
+//            Spacer(Modifier.width(4.dp))
 
             OutlinedButton(
                 onClick = { onCartActionDirectMoveToBill(item, false) },

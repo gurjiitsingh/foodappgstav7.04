@@ -1,5 +1,6 @@
 package com.it10x.foodappgstav7_04.ui.cart
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.SavedStateHandle

@@ -196,8 +196,18 @@ class ProductsLocalViewModel(
 
 
     // ---------------- FUNCTIONS ----------------
+//    fun setSearchQuery(query: String) {
+//        _searchQuery.value = query
+//
+//        // 🔥 Reset "More" when query changes
+//        _showMoreMatches.value = false
+//    }
+
     fun setSearchQuery(query: String) {
-        _searchQuery.value = query
+        if (_searchQuery.value != query) {
+            _searchQuery.value = query
+            _showMoreMatches.value = false
+        }
     }
 
     fun setCategory(categoryId: String?) {

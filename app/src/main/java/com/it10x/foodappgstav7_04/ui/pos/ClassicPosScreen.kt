@@ -1,10 +1,13 @@
 package com.it10x.foodappgstav7_04.ui.pos
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -18,21 +21,29 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.it10x.foodappgstav7_04.data.pos.AppDatabaseProvider
+import com.it10x.foodappgstav7_04.data.pos.repository.CartRepository
 import com.it10x.foodappgstav7_04.ui.cart.CartViewModel
+import com.it10x.foodappgstav7_04.data.pos.viewmodel.getParentProducts
 import com.it10x.foodappgstav7_04.data.pos.viewmodel.POSOrdersViewModel
 
 
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.it10x.foodappgstav7_04.data.pos.entities.TableEntity
+import com.it10x.foodappgstav7_04.ui.cart.CartViewModelFactory
 import com.it10x.foodappgstav7_04.viewmodel.PosTableViewModel
 import com.it10x.foodappgstav7_04.ui.kitchen.KitchenScreen
 
 
 import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModel
 import android.widget.Toast
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -40,17 +51,26 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.zIndex
 import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository
 import com.it10x.foodappgstav7_04.ui.bill.BillDialog
 import com.it10x.foodappgstav7_04.ui.bill.BillDialogPhone
+import com.it10x.foodappgstav7_04.ui.bill.BillScreen
+import com.it10x.foodappgstav7_04.ui.bill.BillViewModel
+import com.it10x.foodappgstav7_04.ui.bill.BillViewModelFactory
 import com.it10x.foodappgstav7_04.ui.cart.CartUiEvent
 import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModelFactory
 
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.input.ImeAction
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
+import com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.pos.ProductListClassic
 import com.it10x.foodappgstav7_04.data.pos.entities.PosCartEntity
 import com.it10x.foodappgstav7_04.data.pos.viewmodel.ProductsLocalViewModel
 import com.it10x.foodappgstav7_04.data.pos.viewmodel.ProductsLocalViewModelFactory
+import com.it10x.foodappgstav7_04.ui.components.PosTouchKeyboard
 
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.focus.onFocusChanged
@@ -403,6 +423,7 @@ fun ClassicPosScreen(
                                                     parentId = null,
                                                     isVariant = false,
                                                     categoryId = first.categoryId,
+                                                    categoryName = first.productCat,
                                                     sessionId = sessionId ?: "",
                                                     tableId = tableId
                                                 )
@@ -454,6 +475,7 @@ fun ClassicPosScreen(
                                                         parentId = null,
                                                         isVariant = false,
                                                         categoryId = product.categoryId,
+                                                        categoryName = product.productCat,
                                                         sessionId = sessionId ?: "",
                                                         tableId = tableId
                                                     )
@@ -639,8 +661,8 @@ fun ClassicPosScreen(
                 tableName = selectedTableName ?: "",
                 sessionId = sessionId!!,
                 orderType = orderType,
-                repository = repository,
-                cartViewModel = cartViewModel,
+                repository = repository
+
 
             )
         )

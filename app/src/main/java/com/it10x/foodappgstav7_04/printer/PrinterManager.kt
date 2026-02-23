@@ -6,12 +6,14 @@ import com.it10x.foodappgstav7_04.data.PrinterConfig
 import com.it10x.foodappgstav7_04.data.PrinterPreferences
 import com.it10x.foodappgstav7_04.data.PrinterRole
 import com.it10x.foodappgstav7_04.data.PrinterType
+import com.it10x.foodappgstav7_04.data.print.OutletInfo
 import com.it10x.foodappgstav7_04.printer.bluetooth.BluetoothPrinter
 import com.it10x.foodappgstav7_04.printer.lan.LanPrinter
 import com.it10x.foodappgstav7_04.printer.usb.USBPrinter
 import com.it10x.foodappgstav7_04.data.print.OutletMapper
 import com.it10x.foodappgstav7_04.data.pos.AppDatabaseProvider
 import com.it10x.foodappgstav7_04.data.pos.entities.PosKotItemEntity
+import com.it10x.foodappgstav7_04.ui.sales.SalesUiState
 import kotlinx.coroutines.runBlocking
 
 class PrinterManager(
@@ -155,7 +157,7 @@ class PrinterManager(
 
         // Get printer configuration and preferences
         val config = prefs.getPrinterConfig(role)
-        val pageSize = prefs.getPrinterSize(role) ?: "80mm"  // ✅ stored in PrinterPreferences
+
 
         if (config == null) {
             Log.e("PRINT_NEW", "No printer configured for role=$role")
@@ -164,7 +166,7 @@ class PrinterManager(
         }
 
         // ✅ Select format based on page size
-        val size = prefs.getPrinterSize(role) ?: "58mm"
+        val size = prefs.getPrinterSize(role) ?: "80mm"
 
         // ✅ Auto-load outlet info if not provided
 
@@ -172,6 +174,12 @@ class PrinterManager(
         val outletEntity = runBlocking { outletDao.getOutlet() }
         val info = OutletMapper.fromEntity(outletEntity)
 
+
+
+//        Log.d(
+//            "PRINT_NEW",
+//            "Outlet Entity = $outletEntity   $info"
+//        )
 
         // ✅ Select format based on printer page size
         val receiptText = when (size) {
@@ -181,10 +189,10 @@ class PrinterManager(
 
 
 
-        Log.d(
-            "PRINT_NEW",
-            "${info.defaultCurrency} Printer type=${config.type}, size=$pageSize, bluetooth=${config.bluetoothAddress}, ip=${config.ip}, "
-        )
+//        Log.d(
+//            "PRINT_NEW",
+//            "${info.defaultCurrency} Printer type=${config.type}, size=$pageSize, bluetooth=${config.bluetoothAddress}, ip=${config.ip}, "
+//        )
 
         // ✅ Printing logic (kept same as before)
         when (config.type) {
@@ -318,4 +326,68 @@ class PrinterManager(
         }
         printTest(config, onResult)
     }
+
+
+
+    fun printSalesReport(
+        role: PrinterRole,
+        state: SalesUiState,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        val config = prefs.getPrinterConfig(role)
+        if (config == null) {
+            onResult(false)
+            return
+        }
+
+        val size = prefs.getPrinterSize(role) ?: "80mm"
+
+        val outletDao = AppDatabaseProvider.get(context).outletDao()
+        val outletEntity = runBlocking { outletDao.getOutlet() }
+        val info = OutletMapper.fromEntity(outletEntity)
+
+        val width = if (size == "80mm") 48 else 32
+
+        val text = ReceiptFormatter.salesReport(
+            state,
+            info,
+            width
+        )
+
+        printText(role, text, onResult)
+    }
+
+
+    fun printSingleCategorySales(
+        role: PrinterRole,
+        category: String,
+        items: Map<String, Double>,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        val config = prefs.getPrinterConfig(role)
+        if (config == null) {
+            onResult(false)
+            return
+        }
+
+        val size = prefs.getPrinterSize(role) ?: "80mm"
+        val width = if (size == "80mm") 48 else 32
+
+        val outletDao = AppDatabaseProvider.get(context).outletDao()
+        val outletEntity = runBlocking { outletDao.getOutlet() }
+        val info = OutletMapper.fromEntity(outletEntity)
+
+        val text = ReceiptFormatter.salesBySingleCategory(
+            category,
+            items,
+            info,
+            width
+        )
+
+        printText(role, text, onResult)
+    }
+
+
 }

@@ -20,6 +20,11 @@ import com.it10x.foodappgstav7_04.viewmodel.PrinterDiscoveryViewModel
 import com.it10x.foodappgstav7_04.viewmodel.PrinterDiscoveryViewModelFactory
 import com.it10x.foodappgstav7_04.viewmodel.PrinterSettingsViewModel
 
+
+import com.it10x.foodappgstav7_04.data.PrinterPreferences
+import com.it10x.foodappgstav7_04.printer.PrinterManager
+import com.it10x.foodappgstav7_04.viewmodel.PrinterSettingsViewModelFactory
+
 @Composable
 fun BluetoothDeviceScreen(
     role: PrinterRole,

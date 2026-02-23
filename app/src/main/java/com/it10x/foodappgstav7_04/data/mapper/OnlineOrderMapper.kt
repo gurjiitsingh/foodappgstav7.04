@@ -26,6 +26,7 @@ object OnlineOrderMapper {
         return orderProducts.map { item ->
             PosKotItemEntity(
                 id = item.id.ifBlank { "ONLINE-${System.nanoTime()}" },
+                categoryName = item.categoryName,
                 sessionId = "",
                 kotBatchId = kotBatchId,
                 tableNo = tableNo ?: "ONLINE",

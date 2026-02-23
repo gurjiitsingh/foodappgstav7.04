@@ -5,6 +5,8 @@ import android.hardware.usb.UsbDevice
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import com.it10x.foodappgstav7_04.printer.discovery.PrinterDiscoveryRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class PrinterDiscoveryViewModel(
     private val repo: PrinterDiscoveryRepository

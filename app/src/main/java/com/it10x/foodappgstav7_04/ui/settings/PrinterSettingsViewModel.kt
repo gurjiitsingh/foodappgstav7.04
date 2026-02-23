@@ -9,6 +9,7 @@ import com.it10x.foodappgstav7_04.data.PrinterRole
 import com.it10x.foodappgstav7_04.data.PrinterType
 import com.it10x.foodappgstav7_04.printer.PrinterManager
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class PrinterSettingsViewModel(
     private val prefs: PrinterPreferences,

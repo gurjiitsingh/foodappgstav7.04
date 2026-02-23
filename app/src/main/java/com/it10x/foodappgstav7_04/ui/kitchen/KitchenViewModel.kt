@@ -12,7 +12,10 @@ import com.it10x.foodappgstav7_04.data.pos.entities.PosKotItemEntity
 import com.it10x.foodappgstav7_04.data.pos.repository.CartRepository
 import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository
 import com.it10x.foodappgstav7_04.data.pos.usecase.KotToBillUseCase
+import com.it10x.foodappgstav7_04.printer.PrintItem
+import com.it10x.foodappgstav7_04.printer.PrintOrder
 import com.it10x.foodappgstav7_04.printer.PrinterManager
+import com.it10x.foodappgstav7_04.printer.ReceiptFormatter
 import com.it10x.foodappgstav7_04.ui.cart.CartViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,7 +39,7 @@ class KitchenViewModel(
     private val sessionId: String,
     private val orderType: String,
     private val repository: POSOrdersRepository,
-    private val cartViewModel: CartViewModel,
+
 ) : AndroidViewModel(app) {
 
     private var kotPrintJob: Job? = null
@@ -353,14 +357,49 @@ class KitchenViewModel(
                     Log.e("KITCHEN_DEBUG4", " saveKotOnly() failed for session=$sessionKey")
                     return@launch
                 }
-
                 //  Log.d("KITCHEN_DEBUG4", " KOT saved successfully (${cartList.size} items)")
-
 
                 repository.clearCart(orderType, tableId)
                 cartRepository.syncCartCount(tableId)
             } catch (e: Exception) {
                 //  Log.e("KITCHEN_DEBUG", " Exception during placeOrder()", e)
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
+
+    fun waiterOrderToKitchen(
+        orderType: String,
+        tableNo: String,
+        sessionId: String,
+        items: List<PosCartEntity>,
+        deviceId: String,
+        deviceName: String?
+    ) {
+        viewModelScope.launch {
+            _loading.value = true
+
+            try {
+
+                val kotSaved = saveKotOnlyToKotItem_withPrint(
+                    orderType = orderType,
+                    sessionId = sessionId,
+                    tableNo = tableNo,
+                    cartItems = items,
+                    deviceId = deviceId,
+                    deviceName = deviceName,
+                    appVersion = "WAITER_SYNC"
+                )
+
+                if (!kotSaved) {
+                    Log.e("WAITER_FLOW", "Failed to save KOT")
+                    return@launch
+                }
+
+            } catch (e: Exception) {
+                Log.e("WAITER_FLOW", "Error", e)
             } finally {
                 _loading.value = false
             }
@@ -413,6 +452,7 @@ class KitchenViewModel(
                         productId = cart.productId,
                         name = cart.name,
                         categoryId = cart.categoryId,
+                        categoryName = cart.categoryName,
                         parentId = cart.parentId,
                         isVariant = cart.isVariant,
                         basePrice = cart.basePrice,
@@ -484,6 +524,7 @@ class KitchenViewModel(
                 productId = cart.productId,
                 name = cart.name,
                 categoryId = cart.categoryId,
+                categoryName = cart.categoryName,
                 parentId = cart.parentId,
                 isVariant = cart.isVariant,
                 basePrice = cart.basePrice,
@@ -568,6 +609,7 @@ class KitchenViewModel(
                     productId = cart.productId,
                     name = cart.name,
                     categoryId = cart.categoryId,
+                    categoryName = cart.categoryName,
                     parentId = cart.parentId,
                     isVariant = cart.isVariant,
                     basePrice = cart.basePrice,

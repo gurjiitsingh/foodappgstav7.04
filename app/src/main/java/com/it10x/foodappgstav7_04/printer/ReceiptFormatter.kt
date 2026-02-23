@@ -3,6 +3,7 @@ package com.it10x.foodappgstav7_04.printer
 import android.util.Log
 import com.it10x.foodappgstav7_04.data.pos.entities.PosKotItemEntity
 import com.it10x.foodappgstav7_04.data.print.OutletInfo
+import com.it10x.foodappgstav7_04.ui.sales.SalesUiState
 
 // -----------------------------
 // PRINT MODELS (ONE TRUTH)
@@ -97,6 +98,9 @@ object ReceiptFormatter {
             append(ALIGN_LEFT)
             append(
                 """
+
+------------------------------
+$outletHeader
 ------------------------------
 $headerBlock
 ----------------------------
@@ -109,6 +113,7 @@ ${totalLine("Tax", order.tax)}
 ------------------------------
 ${totalLine("GRAND TOTAL", order.grandTotal)}
 ------------------------------
+${buildOutletFooter(outletInfo, 32)}
 Thank You!
 
 
@@ -118,13 +123,10 @@ Thank You!
     }
 
 
-
-
-
     fun billing48(order: PrintOrder, outletInfo: OutletInfo): String {
 
         val LINE_WIDTH = 48
-        Log.d("RECEIPT_FORMATTER", "billing48() called for orderNo=${order.orderNo}")
+      //  Log.d("RECEIPT_FORMATTER", "billing48() called for orderNo=${order.orderNo}")
         val outletHeader = buildOutletHeader(outletInfo, LINE_WIDTH)
 
 
@@ -211,6 +213,7 @@ ${totalLine48("Tax", order.tax)}
 ------------------------------------------------
 ${totalLine48("GRAND TOTAL", order.grandTotal)}
 ------------------------------------------------
+${buildOutletFooter(outletInfo, 48)}
 Thank You!
 
 
@@ -218,10 +221,6 @@ Thank You!
             )
         }
     }
-
-
-
-
 
 
     // -----------------------------
@@ -471,16 +470,6 @@ ${"-".repeat(48)}
 
 
 
-
-
-
-
-
-
-
-
-
-
     // -----------------------------
 // INTERNAL HELPERS (dynamic lineWidth)
 // -----------------------------
@@ -570,7 +559,7 @@ Thank You!
             info.email?.let { lines += "Email: $it" }
             info.web?.let { lines += "Web: $it" }
             info.gst?.let { lines += "GST: $it" }
-            info.footerNote?.let { lines += it.take(width) }
+         //   info.footerNote?.let { lines += it.take(width) }
         }
 
         if(width==48){
@@ -593,7 +582,7 @@ Thank You!
             info.email?.let { lines += "Email: $it" }
             info.web?.let { lines += "Web: $it" }
             info.gst?.let { lines += "GST: $it" }
-            info.footerNote?.let { lines += it.take(width) }
+           // info.footerNote?.let { lines += it.take(width) }
         }
 
         return lines.joinToString("\n")
@@ -602,6 +591,154 @@ Thank You!
     private fun centerText(text: String, width: Int): String {
         val pad = (width - text.length) / 2
         return " ".repeat(maxOf(pad, 0)) + text
+    }
+
+
+    private fun buildOutletFooter(info: OutletInfo, width: Int): String {
+
+        val note = info.footerNote?.trim()
+
+        // 🔹 If null or blank → return empty (do not show anything)
+        if (note.isNullOrBlank()) return ""
+
+        val wrappedLines = wrapText(note, width)
+
+        return buildString {
+            append("-".repeat(width))
+            append("\n")
+
+            wrappedLines.forEach { line ->
+                append(line)     // left aligned (better for readability)
+                append("\n")
+            }
+
+            append("-".repeat(width))
+            append("\n")
+        }
+    }
+
+    private fun wrapText(text: String, width: Int): List<String> {
+        val words = text.split("\\s+".toRegex())
+        val lines = mutableListOf<String>()
+        var currentLine = ""
+
+        for (word in words) {
+
+            // If single word itself is longer than width
+            if (word.length >= width) {
+                if (currentLine.isNotBlank()) {
+                    lines.add(currentLine.trim())
+                    currentLine = ""
+                }
+
+                // break long word safely
+                word.chunked(width).forEach {
+                    lines.add(it)
+                }
+
+                continue
+            }
+
+            if ((currentLine + word).length + 1 > width) {
+                lines.add(currentLine.trim())
+                currentLine = "$word "
+            } else {
+                currentLine += "$word "
+            }
+        }
+
+        if (currentLine.isNotBlank()) {
+            lines.add(currentLine.trim())
+        }
+
+        return lines
+    }
+
+    fun salesReport(
+        state: SalesUiState,
+        outletInfo: OutletInfo,
+        width: Int
+    ): String {
+
+        val divider = "-".repeat(width)
+
+        fun line(label: String, value: Double): String {
+            val formatted = "%.2f".format(value)
+            val space = width - label.length - formatted.length
+            return label + " ".repeat(if (space > 0) space else 1) + formatted
+        }
+
+        val header = buildOutletHeader(outletInfo, width)
+
+        return buildString {
+            append("\u001B\u0061\u0000") // align left
+            append(header + "\n")
+            append(divider + "\n")
+            append("SALES REPORT\n")
+            append(divider + "\n")
+
+            append("From : ${java.util.Date(state.from)}\n")
+            append("To   : ${java.util.Date(state.to)}\n")
+            append(divider + "\n")
+
+            append(line("Total Sales", state.totalSales) + "\n")
+            append(line("Tax", state.taxTotal) + "\n")
+            append(line("Discount", state.discountTotal) + "\n")
+
+            append(divider + "\n")
+
+            state.paymentBreakup.forEach { (type, amount) ->
+                append(line(type, amount) + "\n")
+            }
+
+            append(divider + "\n")
+            append(line("Food", state.foodTotal) + "\n")
+            append(line("Beverages", state.beveragesTotal) + "\n")
+            append(line("Wine", state.wineTotal) + "\n")
+
+            append(divider + "\n\n")
+        }
+    }
+
+
+
+    fun salesBySingleCategory(
+        category: String,
+        items: Map<String, Double>,
+        outletInfo: OutletInfo,
+        width: Int
+    ): String {
+
+        val divider = "-".repeat(width)
+
+        fun line(label: String, value: Double): String {
+            val formatted = "%.2f".format(value)
+            val safeLabel = label.take(width - formatted.length - 1)
+            val space = width - safeLabel.length - formatted.length
+            return safeLabel + " ".repeat(if (space > 0) space else 1) + formatted
+        }
+
+        val header = buildOutletHeader(outletInfo, width)
+
+        return buildString {
+
+            append("\u001B\u0061\u0000")
+            append(header + "\n")
+            append(divider + "\n")
+            append("CATEGORY REPORT\n")
+            append(category.uppercase() + "\n")
+            append(divider + "\n")
+
+            if (items.isEmpty()) {
+                append("No sales data\n")
+            } else {
+                items.forEach { (itemName, total) ->
+                    append(line(itemName, total) + "\n")
+                }
+            }
+
+            append(divider + "\n\n")
+        }
     }
 
 

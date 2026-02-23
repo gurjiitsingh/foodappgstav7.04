@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.*
 import com.it10x.foodappgstav7_04.data.pos.entities.PosCustomerEntity
 import com.it10x.foodappgstav7_04.data.pos.repository.CustomerRepository
 import kotlinx.coroutines.flow.MutableStateFlow

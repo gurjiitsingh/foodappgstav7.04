@@ -1,11 +1,15 @@
 package com.it10x.foodappgstav7_04.ui.settings
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import android.os.Handler
+import android.os.Looper
 import com.it10x.foodappgstav7_04.data.PrinterRole
 import com.it10x.foodappgstav7_04.viewmodel.PrinterSettingsViewModel
 

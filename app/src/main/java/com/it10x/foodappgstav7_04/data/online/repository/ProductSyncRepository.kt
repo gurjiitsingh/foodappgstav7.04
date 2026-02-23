@@ -71,8 +71,12 @@ class ProductSyncRepository(
 
                 // ------------ DISPLAY ------------
 
-                name = data["name"] as? String ?: "",
-                price = anyToDouble(data["price"]),
+                name = data["name"] as? String
+                    ?: error("Product missing name"),
+
+                price = anyToDouble(data["price"]).also {
+                    if (it <= 0.0) error("Invalid product price for ${doc.id}")
+                },
                 discountPrice = (data["discountPrice"] as? Number)?.toDouble(),
                 image = data["image"] as? String,
 
@@ -84,8 +88,11 @@ class ProductSyncRepository(
 
                 // ------------ CATEGORY ------------
 
-                categoryId = data["categoryId"] as? String ?: "",
-                productCat = data["productCat"] as? String,
+                categoryId = data["categoryId"] as? String
+                    ?: error("OrderProductData missing categoryId"),
+
+                productCat = data["productCat"] as? String
+                    ?: error("OrderProductData missing productCat"),
 
                 // ------------ VARIANTS ------------
 

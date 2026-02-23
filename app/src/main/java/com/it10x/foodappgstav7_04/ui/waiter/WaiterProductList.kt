@@ -1,4 +1,4 @@
-package com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.pos
+package com.it10x.foodappgstav7_04.ui.waiter
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -25,9 +25,9 @@ import com.it10x.foodappgstav7_04.ui.theme.*
 import com.it10x.foodappgstav7_04.viewmodel.PosTableViewModel
 
 @Composable
-fun ProductListWaiter(
+fun WaiterProductList(
     filteredProducts: List<ProductEntity>,
-   // variants: List<ProductEntity>,
+    // variants: List<ProductEntity>,
     cartViewModel: CartViewModel,
     tableViewModel: PosTableViewModel,
     tableNo: String,
@@ -154,19 +154,20 @@ private fun ParentProductCard(
                             productId = product.id,
                             name = toTitleCase(product.name),
                             basePrice = price,
-                            note = "",                // ✅ change here
-                            modifiersJson = "",       // ✅ change here
+                            note = "",
+                            modifiersJson = "",
                             quantity = 1,
                             taxRate = product.taxRate ?: 0.0,
                             taxType = product.taxType ?: "inclusive",
                             parentId = null,
                             isVariant = false,
                             categoryId = product.categoryId,
+                            categoryName = product.productCat,
                             sessionId = sessionId,
                             tableId = tableNo
                         )
                     )
-                  //  onProductAdded()
+                    onProductAdded()
                     tableViewModel.markOrdering(tableNo)
                 },
                 modifier = Modifier

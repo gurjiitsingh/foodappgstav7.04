@@ -1,5 +1,6 @@
 package com.it10x.foodappgstav7_04.ui.cart
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -111,6 +112,10 @@ class CartViewModel(
                 ),
                 tableNo =  currentTableId.value!!,
             )
+
+
+            val tableNo = currentTableId.value ?: return@launch
+            repository.syncCartCount(tableNo)
         }
     }
 

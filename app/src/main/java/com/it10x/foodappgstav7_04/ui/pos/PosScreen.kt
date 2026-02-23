@@ -1,5 +1,6 @@
 package com.it10x.foodappgstav7_04.ui.pos
 
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,20 +20,26 @@ import com.it10x.foodappgstav7_04.data.pos.AppDatabaseProvider
 import com.it10x.foodappgstav7_04.ui.cart.CartViewModel
 import com.it10x.foodappgstav7_04.data.pos.viewmodel.POSOrdersViewModel
 
-
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+
 import com.it10x.foodappgstav7_04.viewmodel.PosTableViewModel
 import com.it10x.foodappgstav7_04.ui.kitchen.KitchenScreen
 
 
 import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModel
 import android.widget.Toast
+
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
@@ -42,14 +49,15 @@ import androidx.compose.ui.zIndex
 import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository
 import com.it10x.foodappgstav7_04.ui.bill.BillDialog
 import com.it10x.foodappgstav7_04.ui.bill.BillDialogPhone
+
 import com.it10x.foodappgstav7_04.ui.cart.CartUiEvent
 import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModelFactory
 
 import androidx.compose.ui.graphics.Shape
-
 import com.it10x.foodappgstav7_04.data.pos.viewmodel.ProductsLocalViewModel
 import com.it10x.foodappgstav7_04.data.pos.viewmodel.ProductsLocalViewModelFactory
 import com.it10x.foodappgstav7_04.ui.components.PosTouchKeyboard
+import com.it10x.foodappgstav7_04.ui.components.PosTouchKeyboardCompact
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -367,42 +375,19 @@ fun PosScreen(
                 // ===== TABLET: SINGLE ROW =====
 
 
-                if(!isPhone){
+                if (!isPhone) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // -------- ORDER TYPE ICON BUTTONS --------
 
-                        // -------- ORDER TYPE BUTTONS --------
-                        PosOrderTypeButton(
-                            label = "Dine In",
-                            selected = orderType == "DINE_IN",
-                            onClick = { orderType = "DINE_IN"; showTableSelector = true },
-                            shape = commonShape,
-                            height = commonHeight
-                        )
-
-                        PosOrderTypeButton(
-                            label = "Takeaway",
-                            selected = orderType == "TAKEAWAY",
-                            onClick = { orderType = "TAKEAWAY"; posSessionViewModel.clearTable(); showTableSelector = false },
-                            shape = commonShape,
-                            height = commonHeight
-                        )
-
-                        PosOrderTypeButton(
-                            label = "Delivery",
-                            selected = orderType == "DELIVERY",
-                            onClick = { orderType = "DELIVERY"; posSessionViewModel.clearTable(); showTableSelector = false },
-                            shape = commonShape,
-                            height = commonHeight
-                        )
-
-                        // -------- TABLE CHIP --------
+                        // 🍽️ Dine In (Table)
                         if (orderType == "DINE_IN" && tableName != null) {
+                            // ✅ Show table chip instead of icon
                             OrderChip(
                                 label = tableName!!,
                                 selected = true,
@@ -410,26 +395,102 @@ fun PosScreen(
                                 shape = commonShape,
                                 height = commonHeight
                             )
+                        } else {
+                            // 🍽️ Dine-in icon
+                            IconButton(
+                                onClick = {
+                                    orderType = "DINE_IN"
+                                    showTableSelector = true
+                                },
+                                modifier = Modifier
+                                    .size(commonHeight)
+                                    .background(
+                                        if (orderType == "DINE_IN") MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceVariant,
+                                        shape = commonShape
+                                    )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Restaurant,
+                                    contentDescription = "Dine In",
+                                    tint = if (orderType == "DINE_IN")
+                                        MaterialTheme.colorScheme.onPrimary
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        // 🛍️ Takeaway icon
+                        IconButton(
+                            onClick = {
+                                orderType = "TAKEAWAY"
+                                posSessionViewModel.clearTable()
+                                showTableSelector = false
+                            },
+                            modifier = Modifier
+                                .size(commonHeight)
+                                .background(
+                                    if (orderType == "TAKEAWAY") MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = commonShape
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingBag, // 🛍️
+                                contentDescription = "Takeaway",
+                                tint = if (orderType == "TAKEAWAY")
+                                    MaterialTheme.colorScheme.onPrimary
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // 🚚 Delivery icon
+                        IconButton(
+                            onClick = {
+                                orderType = "DELIVERY"
+                                posSessionViewModel.clearTable()
+                                showTableSelector = false
+                            },
+                            modifier = Modifier
+                                .size(commonHeight)
+                                .background(
+                                    if (orderType == "DELIVERY") MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = commonShape
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocalShipping, // 🚚
+                                contentDescription = "Delivery",
+                                tint = if (orderType == "DELIVERY")
+                                    MaterialTheme.colorScheme.onPrimary
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
 
                         // -------- CATEGORY BUTTON --------
-                        Button(
+                        IconButton(
                             onClick = { showCategorySelector = true },
-                            modifier = Modifier.height(commonHeight), // set height here
-                            shape = commonShape, // set shape here
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            modifier = Modifier
+                                .size(commonHeight)
+                                .background(MaterialTheme.colorScheme.primary, shape = commonShape)
                         ) {
-                            Text("Category")
+                            Icon(
+                                imageVector = Icons.Default.Category,
+                                contentDescription = "Category",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
                         }
 
-                        // -------- SEARCH BOX + CLEAR --------
+                        // -------- SEARCH FIELD + CLEAR --------
                         Row(
                             modifier = Modifier.weight(1f),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-
-                            // SEARCH BOX
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -440,7 +501,7 @@ fun PosScreen(
                                     value = searchQuery,
                                     onValueChange = {},
                                     modifier = Modifier.fillMaxSize(),
-                                    placeholder = { Text("Search by name or code") },
+                                    placeholder = { Text("Search...") },
                                     singleLine = true,
                                     readOnly = true,
                                     enabled = false,
@@ -448,7 +509,6 @@ fun PosScreen(
                                 )
                             }
 
-                            // CLEAR BUTTON
                             IconButton(
                                 onClick = {
                                     searchQuery = ""
@@ -456,21 +516,35 @@ fun PosScreen(
                                 },
                                 modifier = Modifier
                                     .size(commonHeight)
-                                    .background(
-                                        MaterialTheme.colorScheme.surfaceVariant,
-                                        shape = commonShape
-                                    )
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, shape = commonShape)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "Clear",
-                                    tint = Color.White // make it visible
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            // ⋮ More Button
+                            IconButton(
+                                onClick = {
+                                    // 🔥 Trigger the More handler
+                                    productsViewModel.showMoreMatches(true)
+                                },
+                                modifier = Modifier
+                                    .size(commonHeight)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, shape = commonShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "More Options",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
                     }
-
                 }
+
                 // ---------- SEARCH BOX ----------
 
 
@@ -595,7 +669,7 @@ fun PosScreen(
 
                       //  Spacer(modifier = Modifier.height(8.dp))
 
-                        PosTouchKeyboard(
+                        PosTouchKeyboardCompact(
                             onKeyPress = { char ->
                                 searchQuery += char
                                 productsViewModel.setSearchQuery(searchQuery)
@@ -689,9 +763,7 @@ fun PosScreen(
                 sessionId = sessionId!!,
                 orderType = orderType,
                 repository = repository,
-                cartViewModel = cartViewModel,
-
-            )
+                 )
         )
 
         val isPhone = LocalConfiguration.current.screenWidthDp < 600
