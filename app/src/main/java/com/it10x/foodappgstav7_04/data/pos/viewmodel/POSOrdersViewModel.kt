@@ -274,7 +274,7 @@ if(role == "bill") {
 //                        quantity = cart.quantity,
 //                        taxRate = cart.taxRate,
 //                        taxType = cart.taxType,
-//                        isPrinted = false,
+//                        print = false,
 //                        status = "PENDING",   // ✅ REQUIRED
 //                        createdAt = now
 //                    )

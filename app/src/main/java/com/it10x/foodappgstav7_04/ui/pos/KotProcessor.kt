@@ -1,70 +1,103 @@
+
+
 package com.it10x.foodappgstav7_04.data.pos
 
 import android.util.Log
-import com.google.firebase.firestore.FirebaseFirestore
+import com.it10x.foodappgstav7_04.data.PrinterRole
 import com.it10x.foodappgstav7_04.data.pos.dao.KotItemDao
 import com.it10x.foodappgstav7_04.data.pos.entities.PosKotItemEntity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.launch
-import java.util.UUID
+import com.it10x.foodappgstav7_04.data.pos.repository.KotRepository
+import com.it10x.foodappgstav7_04.printer.PrinterManager
 
 class KotProcessor(
-    private val kotItemDao: KotItemDao
+    private val kotItemDao: KotItemDao,
+    private val kotRepository: KotRepository,
+    private val printerManager: PrinterManager
 ) {
-    private val scope = CoroutineScope(Dispatchers.IO)
 
-    fun processWaiterOrder(
-        orderId: String,
+    // ✅ Already suspend — NO scope.launch here
+    suspend fun processWaiterOrder(
         tableNo: String,
         sessionId: String,
-        items: List<Map<String, Any>>
+        orderType: String,
+        items: List<PosKotItemEntity>
     ) {
-        scope.launch {
-            // ✅ Prevent duplicates
-            val alreadyExists = kotItemDao.isOrderAlreadyProcessed(orderId)
-            if (alreadyExists) return@launch
 
-            val now = System.currentTimeMillis()
+        Log.d("WAITER_KOT", "==============================")
+        Log.d("WAITER_KOT", "Incoming Waiter Order")
+        Log.d("WAITER_KOT", "Table: $tableNo | Session: $sessionId")
+        Log.d("WAITER_KOT", "Items Count: ${items.size}")
+        Log.d("WAITER_KOT", "==============================")
 
-            val kotItems = items.map { itemMap ->
-                val productId = itemMap["productId"] as? String ?: UUID.randomUUID().toString()
-                val name = itemMap["productName"] as? String ?: ""
-                val quantity = (itemMap["quantity"] as? Long ?: 1L).toInt()
-                val price = itemMap["price"] as? Double ?: 0.0
-                val taxRate = itemMap["taxRate"] as? Double ?: 0.0
-                val modifiersJson = itemMap["modifiersJson"] as? String ?: ""
-                val categoryId = itemMap["categoryId"] as? String ?: ""
-                val categoryName = itemMap["categoryName"] as? String ?: "WAITER"
+        // 1️⃣ Insert / Update All Items First
+        items.forEach { item ->
 
-                PosKotItemEntity(
-                    id = UUID.randomUUID().toString(),
-                    sessionId = sessionId,
-                    kotBatchId = orderId,
-                    tableNo = tableNo,
-                    productId = productId,
-                    name = name,
-                    categoryId = categoryId,
-                    categoryName = categoryName,
-                    parentId = null,
-                    isVariant = false,
-                    basePrice = price,
-                    quantity = quantity,
-                    taxRate = taxRate,
-                    taxType = "exclusive",
-                    status = "DONE",
-                    note = "",
-                    modifiersJson = modifiersJson,
-                    isPrinted = false,
-                    createdAt = now,
-                    source = "WAITER",
-                    syncedToCloud = false,
-                    syncedFromCloud = true
+            val id = "${item.productId}_${tableNo}"
+
+            val existingQty = kotItemDao.getItemQtyById(id) ?: 0
+            val totalQty = existingQty + item.quantity
+
+            Log.d(
+                "WAITER_KOT",
+                "Item: ${item.name} | IncomingQty=${item.quantity} | ExistingQty=$existingQty | FinalQty=$totalQty"
+            )
+
+            if (existingQty > 0) {
+                kotItemDao.updateQuantity(id, totalQty)
+                Log.d("WAITER_KOT", "Updated existing item: $id")
+            } else {
+                kotItemDao.insert(
+                    item.copy(
+                        id = id,
+                        sessionId = sessionId,
+                        tableNo = tableNo,
+                        quantity = totalQty,
+                        print = item.print,
+                        status = "PENDING",
+                        createdAt = System.currentTimeMillis()
+                    )
                 )
+                Log.d("WAITER_KOT", "Inserted new item: $id")
             }
-
-            kotItemDao.insertAll(kotItems)
         }
+
+        // 2️⃣ Fetch Unprinted Items
+        val unprintedItems = kotItemDao.getUnprintedItems(tableNo)
+
+        Log.d("WAITER_KOT", "------------------------------")
+        Log.d("WAITER_KOT", "Unprinted Items Count: ${unprintedItems.size}")
+
+        unprintedItems.forEach {
+            Log.d(
+                "WAITER_KOT_PRINT",
+                "PRINT -> ${it.name} | Qty=${it.quantity} | Printed=${it.print}"
+            )
+        }
+
+        Log.d("WAITER_KOT", "------------------------------")
+
+        if (unprintedItems.isNotEmpty()) {
+
+            // 3️⃣ Print Once
+            Log.d("WAITER_KOT", "Sending items to PrinterManager...")
+
+            printerManager.printTextKitchen(
+                PrinterRole.KITCHEN,
+                sessionKey = tableNo,
+                orderType = orderType,
+                items = unprintedItems
+            )
+
+            // 4️⃣ Mark Printed
+            kotRepository.markDoneAll(tableNo)
+            kotRepository.syncBillCount(tableNo)
+
+            Log.d("WAITER_KOT", "✅ Printing Completed for table=$tableNo")
+        } else {
+            Log.d("WAITER_KOT", "⚠️ No items to print")
+        }
+
+        Log.d("WAITER_KOT", "==============================")
     }
 }
+

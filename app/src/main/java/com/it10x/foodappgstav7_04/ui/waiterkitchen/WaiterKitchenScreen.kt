@@ -171,7 +171,7 @@ fun WaiterKitchenScreen(
                         tint = Color.White
                     )
                     Spacer(Modifier.width(6.dp))
-                    Text("Send to Kitchen & Bill1", color = Color.White)
+                    Text("Send All", color = Color.White)
                 }
 
                 // 🔹 Generate Bill

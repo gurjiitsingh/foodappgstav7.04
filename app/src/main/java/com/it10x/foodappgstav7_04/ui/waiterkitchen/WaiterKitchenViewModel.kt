@@ -87,7 +87,8 @@ class WaiterKitchenViewModel(
         cartList: List<PosCartEntity>,
         tableNo: String,
         deviceId: String,
-        deviceName: String?
+        deviceName: String?,
+
     ) {
         viewModelScope.launch {
 
@@ -99,7 +100,8 @@ class WaiterKitchenViewModel(
                 sessionId = sessionId,
                 orderType = orderType,
                 deviceId = deviceId,
-                deviceName = deviceName
+                deviceName = deviceName,
+
             )
 
             if (success) {
@@ -254,7 +256,7 @@ class WaiterKitchenViewModel(
                 note = cart.note,
                 modifiersJson = cart.modifiersJson,
                 status = "DONE",
-                isPrinted = false,
+                print = false,
                 createdAt = now
             )
 
@@ -336,7 +338,7 @@ class WaiterKitchenViewModel(
                     taxType = cart.taxType,
                     note = cart.note,
                     modifiersJson = cart.modifiersJson,
-                    isPrinted = false,
+                    print = false,
                     status = "DONE",
                     createdAt = now
                 )

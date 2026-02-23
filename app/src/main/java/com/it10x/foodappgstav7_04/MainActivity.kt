@@ -60,6 +60,7 @@ import com.it10x.foodappgstav7_04.data.pos.KotProcessor
 import com.it10x.foodappgstav7_04.ui.bill.BillViewModel
 import androidx.activity.viewModels
 import com.it10x.foodappgstav7_04.data.pos.entities.PosCartEntity
+import com.it10x.foodappgstav7_04.data.pos.repository.KotRepository
 import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository
 import com.it10x.foodappgstav7_04.ui.cart.CartViewModel
 import com.it10x.foodappgstav7_04.ui.cart.CartViewModelFactory
@@ -79,7 +80,25 @@ class MainActivity : ComponentActivity() {
         // ✅ START GLOBAL WAITER → POS SYNC
         val firestore = FirebaseFirestore.getInstance()
         val kotItemDao = AppDatabaseProvider.get(this).kotItemDao()
-        val kotProcessor = KotProcessor(kotItemDao)
+
+
+        val db1 = AppDatabaseProvider.get(this)
+
+
+        val kotRepository = KotRepository(
+            batchDao = db1.kotBatchDao(),
+            kotItemDao = db1.kotItemDao(),
+            tableDao = db1.tableDao()
+        )
+
+        val printerManager = PrinterManager(this)
+
+
+        val kotProcessor = KotProcessor(
+            kotItemDao = db1.kotItemDao(),
+            kotRepository = kotRepository,
+            printerManager = printerManager
+        )
 
 // Inject callback from BillViewModel
         // MainActivity (or wherever BillViewModel exists)

@@ -150,6 +150,8 @@ suspend fun decrease(productId: String, tableNo: String) {
         return note?.trim().orEmpty()
     }
 
-
+    suspend fun updatePrintFlag(id: Long, value: Boolean) {
+        dao.updatePrintFlag(id, value)
+    }
 
 }

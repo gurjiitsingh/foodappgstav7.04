@@ -45,7 +45,7 @@ object OnlineOrderMapper {
                 taxType = "exclusive", // assume online prices are exclusive
 
                 status = "DONE",
-                isPrinted = false,
+                print = false,
 
                 createdAt = now
             )

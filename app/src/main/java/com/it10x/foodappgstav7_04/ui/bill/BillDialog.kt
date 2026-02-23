@@ -122,10 +122,11 @@ fun BillDialog(
 
 
                     Text(
-                        "Final Bill",
+                        "Final Bill ${ selectedTableName}",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
+
 
                     Divider(thickness = 1.dp, color = Color.Gray.copy(alpha = 0.4f))
                     BillScreen(

@@ -18,12 +18,27 @@ class WaiterKitchenRepository(
         sessionId: String,
         orderType: String,
         deviceId: String,
-        deviceName: String?
+        deviceName: String?,
+
     ): Boolean {
 
         return try {
 
             if (cartList.isEmpty()) return false
+
+
+            Log.d("WAITER_FIRESTORE", "==============================")
+            Log.d("WAITER_FIRESTORE", "Sending order to Firestore")
+            Log.d("WAITER_FIRESTORE", "Table: $tableNo | Session: $sessionId")
+            Log.d("WAITER_FIRESTORE", "Cart Size: ${cartList.size}")
+            Log.d("WAITER_FIRESTORE", "==============================")
+
+            cartList.forEach {
+                Log.d(
+                    "WAITER_CART_DEBUG",
+                    "Cart -> ${it.name} | Qty=${it.quantity} | print=${it.print}"
+                )
+            }
 
             val orderId = firestore.collection("waiter_orders").document().id
             val batch = firestore.batch()
@@ -58,7 +73,9 @@ class WaiterKitchenRepository(
                     price = cartItem.basePrice,
                     taxRate = cartItem.taxRate,
                     tableNo = tableNo,
-                    sessionId = sessionId
+                    sessionId = sessionId,
+                    print = cartItem.print,
+                    printStatus = if (cartItem.print) "PENDING" else "SKIPPED"
                 )
 
                 batch.set(itemRef, orderItem)

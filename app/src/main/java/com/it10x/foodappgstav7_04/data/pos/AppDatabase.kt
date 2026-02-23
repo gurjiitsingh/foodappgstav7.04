@@ -23,7 +23,7 @@ import com.it10x.foodappgstav7_04.data.pos.entities.config.*
         PosCustomerLedgerEntity::class,
 
     ],
-    version = 67,              // ⬆️ increment version since schema changed
+    version = 69,              // ⬆️ increment version since schema changed
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

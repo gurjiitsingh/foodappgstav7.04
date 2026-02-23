@@ -91,7 +91,7 @@ class KitchenViewModel(
             kotRepository.syncBillCount(itemId)
 
             // ❌ If already printed → DO NOT PRINT AGAIN
-            if (item.isPrinted || !print) return@launch
+            if (item.print || !print) return@launch
 
             printerManager.printTextKitchen(
                 PrinterRole.KITCHEN,
@@ -113,7 +113,7 @@ class KitchenViewModel(
             val item = kotItemDao.getItemByIdSync(itemId) ?: return@launch
 
             // ❌ If already printed → DO NOT PRINT AGAIN
-            if (item.isPrinted || !print) return@launch
+            if (item.print || !print) return@launch
 
 
 
@@ -461,7 +461,7 @@ class KitchenViewModel(
                         taxType = cart.taxType,
                         note = cart.note,
                         modifiersJson = cart.modifiersJson,
-                        isPrinted = false,
+                        print = false,
                         status = "DONE",   // ✅ REQUIRED
                         createdAt = now
                     )
@@ -534,7 +534,7 @@ class KitchenViewModel(
                 note = cart.note,
                 modifiersJson = cart.modifiersJson,
                 status = "DONE",
-                isPrinted = false,
+                print = false,
                 createdAt = now
             )
 
@@ -602,7 +602,7 @@ class KitchenViewModel(
 
             val items = cartItems.map { cart ->
                 PosKotItemEntity(
-                    id = UUID.randomUUID().toString(),
+                    id = "${cart.productId}_$tableNo",
                     sessionId = sessionId,
                     kotBatchId = batchId,
                     tableNo = tableNo,
@@ -618,7 +618,7 @@ class KitchenViewModel(
                     taxType = cart.taxType,
                     note = cart.note,
                     modifiersJson = cart.modifiersJson,
-                    isPrinted = false,
+                    print = false,
                     status = "DONE",
                     createdAt = now
                 )
@@ -706,7 +706,7 @@ class KitchenViewModel(
 //                        quantity = cart.quantity,
 //                        taxRate = cart.taxRate,
 //                        taxType = cart.taxType,
-//                        isPrinted = false,
+//                        print = false,
 //                        status = "DONE",   // ✅ REQUIRED
 //                        createdAt = now
 //                    )
@@ -740,7 +740,7 @@ class KitchenViewModel(
                     items.forEach { item ->
                         Log.d(
                             "KITCHEN_DEBUG1",
-                            "Status=${item.status},isPrinted=${item.isPrinted}, Table=${item.tableNo},Name=${item.name},  BatchId=${item.kotBatchId},ID=${item.id}"
+                            "Status=${item.status},print=${item.print}, Table=${item.tableNo},Name=${item.name},  BatchId=${item.kotBatchId},ID=${item.id}"
                         )
                     }
                 }

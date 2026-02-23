@@ -159,6 +159,9 @@ LIMIT 1
         modifiersJson: String
     ): PosCartEntity?
 
+    @Query("UPDATE cart SET print = :value WHERE id = :id")
+    suspend fun updatePrintFlag(id: Long, value: Boolean)
+
 
 
 }

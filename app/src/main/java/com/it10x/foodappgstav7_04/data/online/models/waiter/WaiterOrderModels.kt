@@ -18,5 +18,8 @@ data class WaiterOrderItem(
     val price: Double = 0.0,
     val taxRate: Double = 0.0,
     val tableNo: String = "",
-    val sessionId: String = ""
+    val sessionId: String = "",
+
+    val print: Boolean = true,
+    val printStatus: String = "PENDING"
 )

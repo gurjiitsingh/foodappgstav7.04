@@ -18,10 +18,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.it10x.foodappgstav7_04.data.pos.entities.PosCartEntity
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Kitchen
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.style.TextOverflow
 import com.it10x.foodappgstav7_04.ui.theme.PosTheme
-
+import androidx.lifecycle.viewModelScope
 @Composable
 fun CartRow(
     item: PosCartEntity,
@@ -91,7 +92,7 @@ fun CartRow(
             IconButton(
                 onClick = { cartViewModel.decrease(item.productId, tableNo) },
                 modifier = Modifier
-                    .size(28.dp)
+                    .size(25.dp)
                     .background(
                         PosTheme.accent.cartRemoveBorder,
                         shape = MaterialTheme.shapes.small
@@ -101,7 +102,7 @@ fun CartRow(
                     "−",
                     color = PosTheme.accent.cartRemoveText,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 17.sp
+                    fontSize = 20.sp
                 )
             }
 
@@ -116,7 +117,7 @@ fun CartRow(
             IconButton(
                 onClick = { cartViewModel.increase(item) },
                 modifier = Modifier
-                    .size(28.dp)
+                    .size(25.dp)
                     .background(
                         PosTheme.accent.cartAddBg,
                         shape = MaterialTheme.shapes.small
@@ -126,51 +127,34 @@ fun CartRow(
                     "+",
                     color = PosTheme.accent.cartAddText,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 17.sp
+                    fontSize = 20.sp
                 )
             }
         }
 
-        Spacer(Modifier.width(15.dp))
+        Spacer(Modifier.width(25.dp))
 
         // 🍳 ACTION BUTTONS
-        Row(
-            modifier = Modifier.width(120.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End
-        ) {
 
-//            Button(
-//                onClick = { onCartActionDirectMoveToBill(item, true) },
-//                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp),
-//                colors = ButtonDefaults.buttonColors(
-//                    containerColor = MaterialTheme.colorScheme.primary
-//                )
-//            ) {
-//                Icon(Icons.Default.SoupKitchen, null, Modifier.size(15.dp))
-//                Spacer(Modifier.width(2.dp))
-//                Icon(Icons.Default.Receipt, null, Modifier.size(15.dp))
-//            }
-//
-//            Spacer(Modifier.width(4.dp))
 
-            OutlinedButton(
-                onClick = { onCartActionDirectMoveToBill(item, false) },
-                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp),
-                border = BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline
-                )
-            ) {
-                Icon(
-                    Icons.Default.Receipt,
-                    null,
-                    Modifier.size(15.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
+                // 🖨️ Toggle Print Button
+                IconButton(
+                    onClick = {
+                        cartViewModel.togglePrint(item)
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SoupKitchen,
+                        contentDescription = "Kitchen Print",
+                        tint = if (item.print)
+                            Color.Gray              // Already sent to kitchen
+                        else
+                            MaterialTheme.colorScheme.primary  // Will print to kitchen
+                    )
+                }
+
+
             }
-        }
-    }
 
     Spacer(Modifier.height(3.dp))
     Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
@@ -210,5 +194,7 @@ fun CartRow(
             }
         )
     }
+
+
 }
 

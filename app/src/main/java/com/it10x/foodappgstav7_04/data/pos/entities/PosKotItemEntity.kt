@@ -42,8 +42,8 @@ data class PosKotItemEntity(
     val note: String = "",
     val modifiersJson: String = "",
 
-    val isPrinted: Boolean,
-
+    val print: Boolean,
+    val printStatus: String = "PENDING",
     val createdAt: Long,
 
     // ================= NEW FIELDS =================

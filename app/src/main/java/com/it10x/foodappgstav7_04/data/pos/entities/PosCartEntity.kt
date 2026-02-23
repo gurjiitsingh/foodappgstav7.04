@@ -47,6 +47,8 @@ data class PosCartEntity(
 
     // 🚀 Kitchen workflow
     val sentToKitchen: Boolean = false,
+    var print: Boolean = false,
+    var printStatus: String = "PENDING",
 
     val createdAt: Long = System.currentTimeMillis()
 )

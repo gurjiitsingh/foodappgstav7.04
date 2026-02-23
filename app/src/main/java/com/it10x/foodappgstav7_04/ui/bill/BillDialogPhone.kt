@@ -67,7 +67,7 @@ fun BillDialogPhone(
                 var customerPhone by remember { mutableStateOf("") }
 
                 Text(
-                    "Final Bill",
+                    "Final Bill ${ selectedTableName}",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
 

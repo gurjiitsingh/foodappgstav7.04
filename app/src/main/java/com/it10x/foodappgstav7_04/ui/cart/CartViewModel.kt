@@ -198,5 +198,14 @@ class CartViewModel(
         }
     }
 
+    fun togglePrint(item: PosCartEntity) {
+        viewModelScope.launch {
+            repository.updatePrintFlag(
+                id = item.id,
+                value = !item.print
+            )
+        }
+    }
+
 
 }

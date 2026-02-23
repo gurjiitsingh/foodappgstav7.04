@@ -23,6 +23,7 @@ interface KotItemDao {
     // -------------------------
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: PosKotItemEntity)
+
     // -------------------------
     // FETCH (LIVE BILL)
     // -------------------------
@@ -104,10 +105,10 @@ AND status = 'PENDING'
     fun getAllKotItems1(): Flow<List<PosKotItemEntity>>
 
     @Query("SELECT quantity FROM pos_kot_items WHERE productId = :itemId LIMIT 1")
-    suspend fun getItemQtyById(itemId: String): Int?
+    suspend fun getItemQtyById1(itemId: String): Int?
 
     @Query("UPDATE pos_kot_items SET quantity = :qty WHERE productId = :id")
-    suspend fun updateQuantity(id: String, qty: Int)
+    suspend fun updateQuantity1(id: String, qty: Int)
 
 //    @Query("DELETE FROM pos_kot_items WHERE productId = :itemId")
 //    suspend fun deleteItemById(itemId: String)
@@ -119,11 +120,28 @@ AND status = 'PENDING'
 // -------------------------
 //    @Query("""
 //    UPDATE pos_kot_items
-//    SET isPrinted = 1
+//    SET print = 1
 //    WHERE id = :itemId
 //""")
 //    suspend fun markPrinted(itemId: String)
 
+
+
+    // ✅ Get quantity for a specific table + product (unique key)
+    @Query("SELECT quantity FROM pos_kot_items WHERE id = :id LIMIT 1")
+    suspend fun getItemQtyById(id: String): Int?
+
+    // ✅ Update quantity for a specific table + product
+    @Query("UPDATE pos_kot_items SET quantity = :qty WHERE id = :id")
+    suspend fun updateQuantity(id: String, qty: Int)
+
+    // ✅ Check if an item exists for table + product
+    @Query("SELECT EXISTS(SELECT 1 FROM pos_kot_items WHERE id = :id)")
+    suspend fun isItemAlreadyExists(id: String): Boolean
+
+    // ✅ Insert a single item (will REPLACE if id already exists)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert1(item: PosKotItemEntity)
 
 
     // -------------------------
@@ -133,7 +151,7 @@ AND status = 'PENDING'
     SELECT * FROM pos_kot_items
     WHERE tableNo = :tableNo
       AND status = 'PENDING'
-      AND isPrinted = 0
+      AND print = 0
     ORDER BY createdAt ASC
 """)
     suspend fun getUnprintedPendingItems(tableNo: String): List<PosKotItemEntity>
@@ -148,22 +166,22 @@ AND status = 'PENDING'
 
     @Query("""
     UPDATE pos_kot_items
-    SET isPrinted = 1
+    SET print = 1
     WHERE tableNo = :tableNo
-      AND isPrinted = 0
+      AND print = 0
 """)
     suspend fun markAllPrintedForTable(tableNo: String)
 
     @Query("""
     UPDATE pos_kot_items
-    SET isPrinted = 1
+    SET print = 1
     WHERE id = :itemId
 """)
     suspend fun markPrinted(itemId: String)
 
     @Query("""
     UPDATE pos_kot_items
-    SET isPrinted = 1
+    SET print = 1
     WHERE id IN (:itemIds)
 """)
     suspend fun markPrintedBatch(itemIds: List<String>)
@@ -178,16 +196,16 @@ AND status = 'PENDING'
 
     @Query("""
     UPDATE pos_kot_items
-    SET isPrinted = 1
+    SET print = 1
     WHERE tableNo = :tableNo
-      AND isPrinted = 0
+      AND print = 0
 """)
     suspend fun markAllPrinted(tableNo: String)
 
     @Query("""
     SELECT * FROM pos_kot_items
     WHERE tableNo = :tableNo
-      AND isPrinted = 0
+      AND print = 0
     ORDER BY createdAt ASC
 """)
     suspend fun getUnprintedItems(tableNo: String): List<PosKotItemEntity>
