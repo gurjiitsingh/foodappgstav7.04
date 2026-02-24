@@ -8,10 +8,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -80,74 +83,95 @@ private fun ParentProductCard(
         .filter { it.tableId == tableNo && it.productId == product.id }
         .sumOf { it.quantity }
 
-    val productBg = MaterialTheme.colorScheme.background
-    val productText = MaterialTheme.colorScheme.onSurface
-
-    val addBg = PosTheme.accent.cartAddBg
-    val addText = PosTheme.accent.cartAddText
-
-    val removeBorder = PosTheme.accent.cartRemoveBorder
-    val removeText = PosTheme.accent.cartRemoveText
-
     val price = when {
         product.discountPrice == null || product.discountPrice == 0.0 -> product.price
         else -> product.discountPrice
     }
 
-    val code = product.searchCode?.trim()
-    val numericCode = code?.takeIf { it.all { ch -> ch.isDigit() } }
+    val displayName = product.searchCode
+        ?.takeIf { it.all(Char::isDigit) }
+        ?.let { "${product.name} $it" }
+        ?: product.name
 
-    val displayName = numericCode?.let {
-        "${product.name} $it"
-    } ?: product.name
+    val cardShape = RoundedCornerShape(10.dp)
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outline)),
-        color = productBg,
-        shape = RectangleShape
+            .padding(horizontal = 6.dp, vertical = 1.dp),
+        shape = cardShape,
+        tonalElevation = 2.dp,
+        shadowElevation = 2.dp,
+        color = MaterialTheme.colorScheme.surface
     ) {
 
         Row(
             modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 6.dp)
+                .padding(horizontal = 10.dp, vertical = 1.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
-            // 🔹 Product name (takes max width)
+            // 🔹 Product Name
             Text(
                 text = toTitleCase(displayName),
                 modifier = Modifier.weight(1f),
                 maxLines = 1,
                 fontSize = 14.sp,
-                color = productText
+                color = MaterialTheme.colorScheme.onSurface
             )
 
-            // 🔹 Remove button
-            OutlinedButton(
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // 🔻 Minus Button (turns red if qty > 0)
+            Button(
                 onClick = { cartViewModel.decrease(product.id, tableNo) },
-                border = BorderStroke(1.5.dp, removeBorder),
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(34.dp),
                 contentPadding = PaddingValues(0.dp),
-                shape = RectangleShape
+                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor =
+                        if (currentQty > 0) Color(0xFFD32F2F)
+                        else Color(0xFFBDBDBD),
+                    contentColor = Color.White
+                ),
+                elevation = ButtonDefaults.buttonElevation(0.dp)
             ) {
-                Text("−", color = removeText, fontSize = 16.sp)
+                Text("−", fontSize = 18.sp)
             }
 
-            // 🔹 Quantity
-            Text(
-                text = currentQty.toString(),
-                modifier = Modifier.padding(horizontal = 6.dp),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = productText
-            )
+            Spacer(modifier = Modifier.width(6.dp))
 
-            // ➕ Add
-            IconButton(
+            // 🔢 Quantity Pill
+            val qtyBg = if (currentQty > 0)
+                Color.White
+            else
+                MaterialTheme.colorScheme.surfaceVariant
+
+            val qtyTextColor = if (currentQty > 0)
+                Color.Black
+            else
+                MaterialTheme.colorScheme.onSurfaceVariant
+
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = qtyBg
+            ) {
+                Text(
+                    text = currentQty.toString(),
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = qtyTextColor
+                )
+            }
+
+
+            Spacer(modifier = Modifier.width(6.dp))
+
+            // ➕ Add Button
+            Button(
                 onClick = {
                     cartViewModel.addToCart(
                         PosCartEntity(
@@ -170,17 +194,19 @@ private fun ParentProductCard(
                     onProductAdded()
                     tableViewModel.markOrdering(tableNo)
                 },
-                modifier = Modifier
-                    .size(width = 40.dp, height = 32.dp)
-                    .background(addBg, RectangleShape)
+                modifier = Modifier.size(34.dp),
+                contentPadding = PaddingValues(0.dp),
+                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF2E7D32),
+                    contentColor = Color.White
+                ),
+                elevation = ButtonDefaults.buttonElevation(0.dp)
             ) {
-                Text(
-                    "+",
-                    color = addText,
-                    fontSize = 18.sp
-                )
+                Text("+", fontSize = 18.sp)
             }
         }
     }
 }
+
 

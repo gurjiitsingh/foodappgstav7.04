@@ -1,6 +1,7 @@
 package com.it10x.foodappgstav7_04.ui.waiterkitchen
 
 import android.app.Application
+import android.os.Build
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -33,6 +34,7 @@ import com.it10x.foodappgstav7_04.data.pos.repository.KotRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.it10x.foodappgstav7_04.data.online.models.waiter.WaiterOrder
 import com.it10x.foodappgstav7_04.data.online.models.waiter.WaiterOrderItem
+
 import com.it10x.foodappgstav7_04.data.pos.repository.WaiterKitchenRepository
 
 import kotlinx.coroutines.tasks.await
@@ -83,6 +85,64 @@ class WaiterKitchenViewModel(
     private val printerManager =
         PrinterManager(app.applicationContext)
 
+    fun waiterCartTo_FireStore_Bill(
+        cartList: List<PosCartEntity>,
+        tableNo: String,
+        deviceId: String,
+        deviceName: String?
+    ) {
+        viewModelScope.launch {
+
+            if (cartList.isEmpty()) return@launch
+
+            _loading.value = true
+
+            try {
+                // 1️⃣ Send to Firestore FIRST
+                val success = waiterKitchenRepository.sendOrderToFireStore(
+                    cartList = cartList,
+                    tableNo = tableNo,
+                    sessionId = sessionId,
+                    orderType = orderType,
+                    deviceId = deviceId,
+                    deviceName = deviceName
+                )
+
+                if (!success) {
+                    Log.e("WAITER_FLOW", "Firestore upload failed")
+                    return@launch
+                }
+
+                // 2️⃣ Save to Bill (Local KOT → DONE state)
+                val billSaved = saveCartItemToBillView(
+                    orderType = orderType,
+                    sessionId = sessionId,
+                    tableNo = tableNo,
+                    cartItems = cartList,
+                    deviceId = deviceId,
+                    deviceName = deviceName,
+                    appVersion = "appVersion"
+                )
+
+                if (!billSaved) {
+                    Log.e("WAITER_FLOW", "Bill save failed")
+                    return@launch
+                }
+
+                // 3️⃣ Clear Cart ONLY after both succeed
+                repository.clearCart(orderType, tableNo)
+                cartRepository.syncCartCount(tableNo)
+
+                Log.d("WAITER_FLOW", "✅ Firestore + Bill saved successfully")
+
+            } catch (e: Exception) {
+                Log.e("WAITER_FLOW", "Error in waiterCartToBill", e)
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
     fun sendToFireStore(
         cartList: List<PosCartEntity>,
         tableNo: String,
@@ -115,7 +175,95 @@ class WaiterKitchenViewModel(
 
 
 
+    private suspend fun saveCartItemToBillView(
+        orderType: String,
+        sessionId: String,
+        tableNo: String?,
+        cartItems: List<PosCartEntity>,
+        deviceId: String,
+        deviceName: String?,
+        appVersion: String?
+    ): Boolean = withContext(Dispatchers.IO) {
 
+        val tableNo = tableNo?: "";
+        try {
+            val db = AppDatabaseProvider.get(printerManager.appContext())
+            val kotBatchDao = db.kotBatchDao()
+            val kotItemDao = db.kotItemDao()
+
+            val batchId = UUID.randomUUID().toString()
+            val now = System.currentTimeMillis()
+
+            repository.markAllSent(tableNo)
+
+            val batch = PosKotBatchEntity(
+                id = batchId,
+                sessionId = sessionId,
+                tableNo = tableNo,
+                orderType = orderType,
+                deviceId = deviceId,
+                deviceName = deviceName,
+                appVersion = appVersion,
+                createdAt = now,
+                sentBy = null,
+                syncStatus = "DONE",
+                lastSyncedAt = null
+            )
+
+            kotBatchDao.insert(batch)
+
+            val items = cartItems.map { cart ->
+                PosKotItemEntity(
+                    id = "${cart.productId}_$tableNo",
+                    sessionId = sessionId,
+                    kotBatchId = batchId,
+                    tableNo = tableNo,
+                    productId = cart.productId,
+                    name = cart.name,
+                    categoryId = cart.categoryId,
+                    categoryName = cart.categoryName,
+                    parentId = cart.parentId,
+                    isVariant = cart.isVariant,
+                    basePrice = cart.basePrice,
+                    quantity = cart.quantity,
+                    taxRate = cart.taxRate,
+                    taxType = cart.taxType,
+                    note = cart.note,
+                    modifiersJson = cart.modifiersJson,
+                    print = true,
+                    status = "DONE",
+                    createdAt = now
+                )
+            }
+
+            kotRepository.insertItemsAndSync(tableNo, items)
+
+            // 🔥 PRINT (still inside same coroutine)
+//            val unprintedItems = kotItemDao.getUnprintedItems(tableNo)
+
+//            if (unprintedItems.isNotEmpty()) {
+//                printerManager.printTextKitchen(
+//                    PrinterRole.KITCHEN,
+//                    sessionKey = tableNo,
+//                    orderType = orderType,
+//                    items = unprintedItems
+//                )
+//
+//                kotRepository.markDoneAll(tableNo)
+//                kotRepository.syncKinchenCount(tableNo)
+//                kotRepository.syncBillCount(tableNo)
+//
+//                Log.d("KITCHEN_PRINT", "Done All printed for table=$tableNo")
+//            }
+
+//            Log.d("KOT", "✅ KOT SAVED: batch=$batchId items=${cartItems.size}")
+            true
+
+        } catch (e: Exception) {
+            Log.e("KOT", "❌ Failed to save KOT", e)
+            false
+        }
+    }
 
 
 

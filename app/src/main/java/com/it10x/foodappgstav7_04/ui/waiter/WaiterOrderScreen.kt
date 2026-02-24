@@ -1,7 +1,6 @@
 package com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.pos
 
 import android.app.Application
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,19 +20,21 @@ import com.it10x.foodappgstav7_04.ui.cart.CartViewModel
 import com.it10x.foodappgstav7_04.data.pos.viewmodel.POSOrdersViewModel
 
 
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.it10x.foodappgstav7_04.viewmodel.PosTableViewModel
-import com.it10x.foodappgstav7_04.ui.kitchen.KitchenScreen
 
 
-import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModel
 import android.widget.Toast
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
@@ -44,15 +45,20 @@ import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository
 import com.it10x.foodappgstav7_04.ui.bill.BillDialog
 import com.it10x.foodappgstav7_04.ui.bill.BillDialogPhone
 import com.it10x.foodappgstav7_04.ui.cart.CartUiEvent
-import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModelFactory
 
 import androidx.compose.ui.graphics.Shape
 import com.google.firebase.firestore.FirebaseFirestore
+import com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.tables.FloatingCartButton
+import com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.tables.OrderChip
+import com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.tables.PosOrderTypeButton
 import com.it10x.foodappgstav7_04.data.pos.repository.WaiterKitchenRepository
 
 import com.it10x.foodappgstav7_04.data.pos.viewmodel.ProductsLocalViewModel
 import com.it10x.foodappgstav7_04.data.pos.viewmodel.ProductsLocalViewModelFactory
 import com.it10x.foodappgstav7_04.ui.components.PosTouchKeyboard
+import com.it10x.foodappgstav7_04.ui.components.PosTouchKeyboardAdv
+import com.it10x.foodappgstav7_04.ui.components.PosTouchKeyboardCompact
+import com.it10x.foodappgstav7_04.ui.components.TouchKeyboardPhone
 import com.it10x.foodappgstav7_04.ui.pos.CategorySelectorDialog
 import com.it10x.foodappgstav7_04.ui.pos.PosSessionViewModel
 import com.it10x.foodappgstav7_04.ui.pos.TableSelectorGrid
@@ -123,21 +129,12 @@ fun WaiterPosScreen(
         )
     }
 
-//    val waiterKitchenRepository = remember {
-//        WaiterKitchenRepository()
-//    }
 
     val waiterKitchenRepository = remember {
         WaiterKitchenRepository(FirebaseFirestore.getInstance())
     }
 
-//    val hasHardwareKeyboard =
-//        LocalConfiguration.current.keyboard != Configuration.KEYBOARD_NOKEYS
-//    if (hasHardwareKeyboard) {
-//        PosHardwareKeyboardHelp(...)
-//    } else {
-//        PosTouchKeyboard(...)
-//    }
+
 
     LaunchedEffect(Unit) {
         cartViewModel.uiEvent.collect { event ->
@@ -181,46 +178,19 @@ fun WaiterPosScreen(
         }
     }
 
-
-
-
-
     LaunchedEffect(Unit) { tableVm.loadTables() }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     val cartItems by cartViewModel.cart.collectAsState(initial = emptyList())
     val cartCount = cartItems.sumOf { it.quantity }
-
     var showCartSheet by remember { mutableStateOf(false) }
-
-
 
     //var showTableSelector by remember { mutableStateOf(false) }
     // ✅ PAYMENT TYPE STATE (DEFAULT CASH)
     var paymentType by remember { mutableStateOf("CASH") }
-
     // ✅ NEW: POPUP STATES
     var showKitchen by remember { mutableStateOf(false) }
     var showBill by remember { mutableStateOf(false) }
     var showCategorySelector by remember { mutableStateOf(false) }
-
-    val parentProducts = filteredProducts.filter { it.parentId == null }
-
-    val variants = filteredProducts
-        .filter { it.parentId != null }
-        .groupBy { it.parentId!! }
 
     LaunchedEffect(orderType, tableId) {
         if (orderType == "DINE_IN" && !tableId.isNullOrBlank()) {
@@ -234,16 +204,12 @@ fun WaiterPosScreen(
         // productsViewModel.setSearchQuery("")
         showSearchKeyboard = false
     }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-
-
         Row(modifier = Modifier.fillMaxSize()) {
-
 
             // ---------- PRODUCTS ----------
             Column(
@@ -253,11 +219,208 @@ fun WaiterPosScreen(
             ) {
 
                 // ---------- ORDER CONTROLS ----------
+                // ---------- ORDER CONTROLS PHONE ----------
+                if (isPhone) {
 
+                    val commonShape = RoundedCornerShape(8.dp)
+                    val commonHeight = 52.dp
 
-                // ===== TABLET: SINGLE ROW =====
+                    // ===== PHONE ROW 1 : ORDER TYPES + CATEGORY =====
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
 
+                        // -------- ORDER TYPE ICON BUTTONS PHONE--------
 
+                        // 🍽️ Dine In (Table)
+                        if (orderType == "DINE_IN" && tableName != null) {
+                            // ✅ Show table chip instead of icon
+                            com.it10x.foodappgstav7_04.ui.pos.OrderChip(
+                                label = tableName!!,
+                                selected = true,
+                                onClick = { showTableSelector = true },
+                                shape = commonShape,
+                                height = commonHeight
+                            )
+                        } else {
+                            // 🍽️ Dine-in icon
+                            IconButton(
+                                onClick = {
+                                    orderType = "DINE_IN"
+                                    showTableSelector = true
+                                },
+                                modifier = Modifier
+                                    .size(commonHeight)
+                                    .background(
+                                        if (orderType == "DINE_IN") MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceVariant,
+                                        shape = commonShape
+                                    )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Restaurant,
+                                    contentDescription = "Dine In",
+                                    tint = if (orderType == "DINE_IN")
+                                        MaterialTheme.colorScheme.onPrimary
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        // 🛍️ Takeaway icon
+                        IconButton(
+                            onClick = {
+                                orderType = "TAKEAWAY"
+                                posSessionViewModel.clearTable()
+                                showTableSelector = false
+                            },
+                            modifier = Modifier
+                                .size(commonHeight)
+                                .background(
+                                    if (orderType == "TAKEAWAY") MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = commonShape
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingBag, // 🛍️
+                                contentDescription = "Takeaway",
+                                tint = if (orderType == "TAKEAWAY")
+                                    MaterialTheme.colorScheme.onPrimary
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // 🚚 Delivery icon
+                        IconButton(
+                            onClick = {
+                                orderType = "DELIVERY"
+                                posSessionViewModel.clearTable()
+                                showTableSelector = false
+                            },
+                            modifier = Modifier
+                                .size(commonHeight)
+                                .background(
+                                    if (orderType == "DELIVERY") MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = commonShape
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocalShipping, // 🚚
+                                contentDescription = "Delivery",
+                                tint = if (orderType == "DELIVERY")
+                                    MaterialTheme.colorScheme.onPrimary
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // -------- CATEGORY BUTTON --------
+                        IconButton(
+                            onClick = { showCategorySelector = true },
+                            modifier = Modifier
+                                .size(commonHeight)
+                                .background(MaterialTheme.colorScheme.primary, shape = commonShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Category,
+                                contentDescription = "Category",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+
+                    // ===== PHONE ROW 2 : TABLE + SEARCH + CLEAR =====
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(commonHeight)
+                                .clickable { showSearchKeyboard = true }
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    // .weight(1f)
+                                    .height(commonHeight)
+                                    .clickable { showSearchKeyboard = true }
+                            ) {
+                                OutlinedTextField(
+                                    value = searchQuery,
+                                    onValueChange = {},
+                                    modifier = Modifier.fillMaxSize(),
+                                    placeholder = { Text("Search...") },
+                                    singleLine = true,
+                                    readOnly = true,
+                                    enabled = false,
+                                    textStyle = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+
+//                            OutlinedTextField(
+//                                value = searchQuery,
+//                                onValueChange = {
+//                                    searchQuery = it
+//                                    productsViewModel.setSearchQuery(it)
+//                                },
+//                                modifier = Modifier
+//                                    // .weight(1f)
+//                                    .height(commonHeight),
+//                                placeholder = { Text("Search by name or code") },
+//                                singleLine = true,
+//                                textStyle = MaterialTheme.typography.bodyMedium
+//                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                searchQuery = ""
+                                productsViewModel.setSearchQuery("")
+                            },
+                            modifier = Modifier
+                                .size(commonHeight)
+                                .background(MaterialTheme.colorScheme.surfaceVariant, shape = commonShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // ⋮ More Button
+                        IconButton(
+                            onClick = {
+                                // 🔥 Trigger the More handler
+                                productsViewModel.showMoreMatches(true)
+                            },
+                            modifier = Modifier
+                                .size(commonHeight)
+                                .background(MaterialTheme.colorScheme.surfaceVariant, shape = commonShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More Options",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+// --------- ORDER CONTROLS TABLET ------
                 if(!isPhone) {
                     Row(
                         modifier = Modifier
@@ -347,96 +510,7 @@ fun WaiterPosScreen(
                     }
                 }
 
-                if(isPhone){
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 10.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
 
-                        // ================= ROW 1 =================
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-
-                            PosOrderTypeButton(
-                                label = "Dine In",
-                                selected = orderType == "DINE_IN",
-                                onClick = { orderType = "DINE_IN"; showTableSelector = true },
-                                shape = commonShape,
-                                height = commonHeight
-                            )
-
-                            if (orderType == "DINE_IN" && tableName != null) {
-                                OrderChip(
-                                    label = tableName!!,
-                                    selected = true,
-                                    onClick = { showTableSelector = true },
-                                    shape = commonShape,
-                                    height = commonHeight
-                                )
-                            }
-
-                            Button(
-                                onClick = { showCategorySelector = true },
-                                modifier = Modifier.height(commonHeight),
-                                shape = commonShape,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                )
-                            ) {
-                                Text("Category")
-                            }
-                        }
-
-                        // ================= ROW 2 (SEARCH) =================
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-
-                            // SEARCH BOX (system keyboard enabled)
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = {
-                                    searchQuery = it
-                                    productsViewModel.setSearchQuery(it)
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(commonHeight),
-                                placeholder = { Text("Search by name or code") },
-                                singleLine = true,
-                                textStyle = MaterialTheme.typography.bodyMedium
-                            )
-
-                            // CLEAR BUTTON
-                            IconButton(
-                                onClick = {
-                                    searchQuery = ""
-                                    productsViewModel.setSearchQuery("")
-                                },
-                                modifier = Modifier
-                                    .size(commonHeight)
-                                    .background(
-                                        MaterialTheme.colorScheme.surfaceVariant,
-                                        shape = commonShape
-                                    )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Clear",
-                                    tint = Color.White
-                                )
-                            }
-                        }
-                    }
-
-                }
 
                 // ---------- SEARCH BOX ----------
 
@@ -538,8 +612,7 @@ fun WaiterPosScreen(
 
         }
 
-
-        // ---------- FLOATING KEYBOARD OVER PRODUCTS ----------
+        // ----------TABLET FLOATING KEYBOARD OVER PRODUCTS ----------
         if (showSearchKeyboard && !isPhone) {
 
             Box(
@@ -562,7 +635,7 @@ fun WaiterPosScreen(
 
                         //  Spacer(modifier = Modifier.height(8.dp))
 
-                        PosTouchKeyboard(
+                        PosTouchKeyboardCompact(
                             onKeyPress = { char ->
                                 searchQuery += char
                                 productsViewModel.setSearchQuery(searchQuery)
@@ -586,6 +659,56 @@ fun WaiterPosScreen(
                 }
             }
         }
+
+        // ----------PHONE FLOATING KEYBOARD OVER PRODUCTS ----------
+        if (showSearchKeyboard && isPhone) {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(100f)
+            ) {
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(2.dp)
+                ) {
+
+                    Column {
+
+
+
+                        //  Spacer(modifier = Modifier.height(8.dp))
+
+                        TouchKeyboardPhone(
+                            onKeyPress = { char ->
+                                searchQuery += char
+                                productsViewModel.setSearchQuery(searchQuery)
+                            },
+                            onBackspace = {
+                                if (searchQuery.isNotEmpty()) {
+                                    searchQuery = searchQuery.dropLast(1)
+                                    productsViewModel.setSearchQuery(searchQuery)
+                                }
+                            },
+                            onClear = {
+                                searchQuery = ""
+                                productsViewModel.setSearchQuery("")
+                            },
+                            onClose = {
+                                showSearchKeyboard = false
+                            },
+                            onMore = { productsViewModel.showMoreMatches(true) }
+                        )
+                    }
+                }
+            }
+        }
+
+
 
 
 

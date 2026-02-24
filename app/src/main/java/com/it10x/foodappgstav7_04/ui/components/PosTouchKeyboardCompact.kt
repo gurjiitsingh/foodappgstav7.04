@@ -111,21 +111,22 @@ fun PosTouchKeyboardCompact(
                 }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-                    listOf("4","5","6","0").forEach { key ->
-                        KeyBigCompact(key, keyHeight, fontSize, Modifier.weight(1f)) {
-                            onKeyPress(key)
-                        }
-                    }
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-                    listOf("7","8","9","DEL").forEach { key ->
+                    listOf("4","5","6","DEL").forEach { key ->
                         KeyBigCompact(key, keyHeight, fontSize, Modifier.weight(1f)) {
                             when (key) {
                                 "DEL" -> onClear()
                                 else -> onKeyPress(key)
                             }
                         }
+                    }
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                    listOf("7","8","9","0").forEach { key ->
+                        KeyBigCompact(key, keyHeight, fontSize, Modifier.weight(1f)) {
+                            onKeyPress(key)
+                        }
+
                     }
                 }
             }

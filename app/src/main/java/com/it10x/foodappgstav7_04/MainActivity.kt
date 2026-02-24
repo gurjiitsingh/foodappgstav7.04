@@ -59,6 +59,11 @@ import com.it10x.foodappgstav7_04.data.pos.AppDatabaseProvider
 import com.it10x.foodappgstav7_04.data.pos.KotProcessor
 import com.it10x.foodappgstav7_04.ui.bill.BillViewModel
 import androidx.activity.viewModels
+import androidx.compose.material.icons.filled.PointOfSale
+import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.TableBar
+import androidx.compose.material.icons.filled.TableRestaurant
 import com.it10x.foodappgstav7_04.data.pos.entities.PosCartEntity
 import com.it10x.foodappgstav7_04.data.pos.repository.KotRepository
 import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository
@@ -66,6 +71,13 @@ import com.it10x.foodappgstav7_04.ui.cart.CartViewModel
 import com.it10x.foodappgstav7_04.ui.cart.CartViewModelFactory
 import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModel
 import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModelFactory
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.TableBar
+import androidx.compose.material.icons.filled.PointOfSale
+import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 class MainActivity : ComponentActivity() {
     private lateinit var globalOrderSyncManager: GlobalOrderSyncManager
@@ -310,6 +322,23 @@ class MainActivity : ComponentActivity() {
                                         .padding(bottom = 4.dp),
                                     thickness = 0.5.dp
                                 )
+                                NavigationDrawerItem(
+                                    label = { Text("Tables") },
+                                    selected = false,
+                                    onClick = {
+                                        scope.launch { drawerState.close() }
+                                        navController.navigate("Tables") {
+                                            popUpTo("Tables") { inclusive = true }
+                                        }
+                                    }
+                                )
+
+                                Divider(
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                        .padding(bottom = 4.dp),
+                                    thickness = 0.5.dp
+                                )
 
                                 Divider(
                                     modifier = Modifier
@@ -478,10 +507,13 @@ class MainActivity : ComponentActivity() {
                 ) {
                 Scaffold(
                     topBar = {
+                        val navBackStackEntry by navController.currentBackStackEntryAsState()
+                        val currentRoute = navBackStackEntry?.destination?.route
                         CenterAlignedTopAppBar(
-                           // title = { Text("POS") },
-                            title = {  },
-                            // LEFT SIDE → SIDEBAR
+
+                            title = {},
+
+                            // LEFT → Drawer
                             navigationIcon = {
                                 IconButton(
                                     onClick = { scope.launch { drawerState.open() } }
@@ -493,31 +525,105 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
 
-                            // RIGHT SIDE → 3 TEXT BUTTONS
+                            // RIGHT → POS NAVIGATION ICONS
                             actions = {
 
-                                OutlinedButton(
+                                val commonShape = RoundedCornerShape(8.dp)
+                                val commonHeight = 48.dp
+
+                                // 🪑 TABLES
+                                IconButton(
+                                    onClick = {
+                                        navController.navigate("tables") {
+                                            launchSingleTop = true
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .size(commonHeight)
+                                        .background(
+                                            if (currentRoute == "tables")
+                                                MaterialTheme.colorScheme.primary
+                                            else
+                                                MaterialTheme.colorScheme.surfaceVariant,
+                                            shape = commonShape
+                                        )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.TableBar,
+                                        contentDescription = "Tables",
+                                        tint = if (currentRoute == "tables")
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                Spacer(Modifier.width(6.dp))
+
+                                // 🖥 POS
+                                IconButton(
                                     onClick = {
                                         navController.navigate("pos") {
-                                            popUpTo("home") { inclusive = true }
+                                            launchSingleTop = true
                                         }
-                                    }
+                                    },
+                                    modifier = Modifier
+                                        .size(commonHeight)
+                                        .background(
+                                            if (currentRoute == "pos")
+                                                MaterialTheme.colorScheme.primary
+                                            else
+                                                MaterialTheme.colorScheme.surfaceVariant,
+                                            shape = commonShape
+                                        )
                                 ) {
-                                    Text("POS")
+                                    Icon(
+                                        imageVector = Icons.Default.PointOfSale,
+                                        contentDescription = "POS",
+                                        tint = if (currentRoute == "pos")
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                OutlinedButton(
+
+                                Spacer(Modifier.width(6.dp))
+
+                                // 🧾 ORDERS
+                                IconButton(
                                     onClick = {
-                                        navController.navigate("local_orders")
-                                    }
+                                        navController.navigate("local_orders") {
+                                            launchSingleTop = true
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .size(commonHeight)
+                                        .background(
+                                            if (currentRoute == "local_orders")
+                                                MaterialTheme.colorScheme.primary
+                                            else
+                                                MaterialTheme.colorScheme.surfaceVariant,
+                                            shape = commonShape
+                                        )
                                 ) {
-                                    Text("ORDERS")
+                                    Icon(
+                                        imageVector = Icons.Default.ReceiptLong,
+                                        contentDescription = "Orders",
+                                        tint = if (currentRoute == "local_orders")
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
-                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Spacer(Modifier.width(8.dp))
+
                                 StopSoundButton(viewModel = realtimeOrdersVM)
                             }
+
                         )
                     }
+
                 ) { paddingValues ->
 
                     NavigationHost(
@@ -538,28 +644,35 @@ class MainActivity : ComponentActivity() {
     fun StopSoundButton(viewModel: RealtimeOrdersViewModel) {
 
         val context = LocalContext.current
+        val commonShape = RoundedCornerShape(8.dp)
+        val commonHeight = 48.dp
 
-        Button(
+        IconButton(
             onClick = {
 
-                // 1️⃣ stop ringtone in ACTIVITY
+                // 1️⃣ Stop ringtone in ViewModel
                 viewModel.stopRingtone()
 
-                // 2️⃣ stop ringtone in SERVICE
+                // 2️⃣ Stop ringtone in Service
                 val intent = Intent("STOP_RINGTONE")
                 intent.setPackage(context.packageName)
                 context.sendBroadcast(intent)
-
             },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.error,
-                contentColor = Color.White // ✅ force text to white
-            )
+            modifier = Modifier
+                .size(commonHeight)
+                .background(
+                    MaterialTheme.colorScheme.error,
+                    shape = commonShape
+                )
         ) {
-            Text("STOP SOUND")
+            Icon(
+                imageVector = Icons.Default.VolumeOff,
+                contentDescription = "Stop Sound",
+                tint = Color.White
+            )
         }
-
     }
+
 
 
     @Composable

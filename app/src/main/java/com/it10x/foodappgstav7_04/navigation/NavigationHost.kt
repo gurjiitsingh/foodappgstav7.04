@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.pos.WaiterPosScreen
+import com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.tables.TableScreen
 import com.it10x.foodappgstav7_04.com.ui.settings.PrinterRoleSelectionScreen
 import com.it10x.foodappgstav7_04.data.PrinterPreferences
 import com.it10x.foodappgstav7_04.data.PrinterRole
@@ -261,6 +262,38 @@ fun NavigationHost(
             )
 
             ClassicPosScreen(
+                navController = navController,
+                onOpenSettings = {
+                    navController.navigate("printer_role_selection")
+                },
+                ordersViewModel = posOrdersViewModel,
+                posSessionViewModel = posSessionViewModel,
+                cartViewModel = cartViewModel,
+                posTableViewModel = posTableViewModel
+            )
+        }
+
+
+        // ---------------- TABLES ----------------
+
+
+
+        composable("tables") {
+
+            val context = LocalContext.current
+            val db = AppDatabaseProvider.get(context)
+
+            val cartViewModel: CartViewModel = viewModel(
+                factory = CartViewModelFactory(
+                    repository = CartRepository(
+                        db.cartDao(),
+                        db.tableDao()
+                    ),
+                    tableReleaseUseCase = tableReleaseUseCase
+                )
+            )
+
+            TableScreen(
                 navController = navController,
                 onOpenSettings = {
                     navController.navigate("printer_role_selection")

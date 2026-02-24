@@ -157,7 +157,7 @@ fun WaiterKitchenScreen(
                             context.contentResolver,
                             Settings.Secure.ANDROID_ID
                         )
-                        waiterkitchenViewModel.sendToFireStore(
+                        waiterkitchenViewModel.waiterCartTo_FireStore_Bill(
                             cartList = cartItems,
                             tableNo = tableNo,
                             deviceId = deviceId,
