@@ -95,7 +95,12 @@ private fun ParentProductCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outline)),
+            .border(
+                BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.10f) // light, subtle border
+                )
+            ),
         color = productBg,
         shape = RectangleShape
     ) {

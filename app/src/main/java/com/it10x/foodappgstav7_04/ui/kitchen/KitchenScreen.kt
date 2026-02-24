@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.it10x.foodappgstav7_04.BuildConfig
+//import com.it10x.foodappgstav7_04.BuildConfig
 import com.it10x.foodappgstav7_04.ui.cart.CartRow
 import com.it10x.foodappgstav7_04.ui.cart.CartViewModel
 
@@ -144,7 +144,7 @@ fun KitchenScreen(
                             paymentType = "UNPAID",
                             deviceId = deviceId,
                             deviceName = Build.MODEL ?: "Unknown Device",
-                            appVersion = BuildConfig.VERSION_NAME
+                            appVersion = "BuildConfig.VERSION_NAME"
                         )
                     }
                 ) {
@@ -157,35 +157,7 @@ fun KitchenScreen(
                     Text("Send to Kitchen & Bill", color = Color.White)
                 }
 
-                // 🔹 Generate Bill
-//                Button(
-//                    modifier = Modifier.fillMaxWidth(),
-//                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-//                    onClick = {
-//
-//                        val deviceId = Settings.Secure.getString(
-//                            context.contentResolver,
-//                            Settings.Secure.ANDROID_ID
-//                        )
-//                        kitchenViewModel.cartToBIll_KitchenNoPrint(
-//                            orderType = orderType,
-//                            tableNo = tableNo,
-//                            sessionId = sessionId,
-//                            paymentType = "UNPAID",
-//                            deviceId = deviceId,
-//                            deviceName = Build.MODEL ?: "Unknown Device",
-//                            appVersion = BuildConfig.VERSION_NAME
-//                        )
-//                    }
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.Receipt,
-//                        contentDescription = "Bill",
-//                        tint = Color.White
-//                    )
-//                    Spacer(Modifier.width(6.dp))
-//                    Text("Send all to Bill", color = Color.White)
-//                }
+
             }
         }
     }
