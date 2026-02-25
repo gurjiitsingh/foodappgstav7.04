@@ -98,7 +98,7 @@ private fun ParentProductCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 6.dp, vertical = 1.dp),
+            .padding(horizontal = 0.dp, vertical = 2.dp),
         shape = cardShape,
         tonalElevation = 2.dp,
         shadowElevation = 2.dp,
@@ -107,7 +107,7 @@ private fun ParentProductCard(
 
         Row(
             modifier = Modifier
-                .padding(horizontal = 10.dp, vertical = 1.dp)
+                .padding(horizontal = 3.dp, vertical = 4.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween

@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.SoupKitchen
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
@@ -289,13 +290,29 @@ fun WaiterPosScreen(
                         }
 
 
-                            FloatingCartButton(
-                                count = cartCount,
-                                onClick = { showCartSheet = true },
-                                modifier = Modifier
-//                                    .align(Alignment.BottomEnd)
-                                    .padding(16.dp)
+                        // 🛒 Cart / Order Button
+                        IconButton(
+                            onClick = { showKitchen = true },
+                            modifier = Modifier
+                                .size(commonHeight)
+                                .background(
+                                    if (cartCount > 0)
+                                        Color(0xFF2E7D32) // ✅ POS Green
+                                    else
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = commonShape
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingCart,
+                                contentDescription = "Cart Orders",
+                                tint = if (cartCount > 0)
+                                    Color.White
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        }
+
 
                     }
 
@@ -769,23 +786,17 @@ fun WaiterPosScreen(
         ) {
             Surface(
                 modifier = Modifier
-                    .then(
-                        if (isPhone)
-                            Modifier.fillMaxWidth(1f) // 📱 full width on phone
-                        else
-                            Modifier.fillMaxWidth(1f) // 💻 slightly narrower on tablet
-                    )
-                    .padding(2.dp),
+                    .fillMaxSize(),   // ✅ FULL SCREEN
                 shape = MaterialTheme.shapes.medium,
                 tonalElevation = 8.dp
             ) {
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize()
                         .padding(5.dp)
-                        .verticalScroll(rememberScrollState())
                 ) {
-                    // ---------- Header ----------
+
+                    // HEADER
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -797,6 +808,7 @@ fun WaiterPosScreen(
                             text = "Kitchen – $tableName",
                             style = MaterialTheme.typography.titleMedium
                         )
+
                         Button(
                             onClick = { showKitchen = false },
                             modifier = Modifier.height(28.dp),
@@ -810,20 +822,12 @@ fun WaiterPosScreen(
                         }
                     }
 
-                    // ---------- Kitchen list ----------
-                    val isPhone = LocalConfiguration.current.screenWidthDp < 600
-
+                    // 👇 THIS IS THE KEY FIX
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .then(
-                                if (isPhone)
-                                    Modifier.heightIn(min = 600.dp, max = 800.dp)   // ✅ mobile full height
-                                else
-                                    Modifier.heightIn(min = 400.dp, max = 700.dp) // tablet limit
-                            )
-                            .padding(top = 4.dp)
-                    ){
+                            .weight(1f)   // ✅ Takes all remaining height
+                    ) {
                         WaiterKitchenScreen(
                             sessionId = sessionId!!,
                             tableNo = tableId ?: orderType,
@@ -837,6 +841,7 @@ fun WaiterPosScreen(
                 }
             }
         }
+
 
 
 
