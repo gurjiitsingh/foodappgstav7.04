@@ -287,6 +287,16 @@ fun WaiterPosScreen(
                                 tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
+
+
+                            FloatingCartButton(
+                                count = cartCount,
+                                onClick = { showCartSheet = true },
+                                modifier = Modifier
+//                                    .align(Alignment.BottomEnd)
+                                    .padding(16.dp)
+                            )
+
                     }
 
                     // ===== PHONE ROW 2 : TABLE + SEARCH + CLEAR =====
@@ -691,17 +701,8 @@ fun WaiterPosScreen(
 
 
 
-        // ---------- MOBILE CART FAB ----------
-//        if (isPhone && cartCount > 0) {
-        if (isPhone) {
-            FloatingCartButton(
-                count = cartCount,
-                onClick = { showCartSheet = true },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            )
-        }
+
+
     }
 
 
@@ -774,14 +775,14 @@ fun WaiterPosScreen(
                         else
                             Modifier.fillMaxWidth(1f) // 💻 slightly narrower on tablet
                     )
-                    .padding(8.dp),
+                    .padding(2.dp),
                 shape = MaterialTheme.shapes.medium,
                 tonalElevation = 8.dp
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp)
+                        .padding(5.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
                     // ---------- Header ----------
@@ -810,12 +811,19 @@ fun WaiterPosScreen(
                     }
 
                     // ---------- Kitchen list ----------
+                    val isPhone = LocalConfiguration.current.screenWidthDp < 600
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 300.dp, max = 600.dp)
+                            .then(
+                                if (isPhone)
+                                    Modifier.heightIn(min = 600.dp, max = 800.dp)   // ✅ mobile full height
+                                else
+                                    Modifier.heightIn(min = 400.dp, max = 700.dp) // tablet limit
+                            )
                             .padding(top = 4.dp)
-                    ) {
+                    ){
                         WaiterKitchenScreen(
                             sessionId = sessionId!!,
                             tableNo = tableId ?: orderType,

@@ -20,6 +20,6 @@ data class WaiterOrderItem(
     val tableNo: String = "",
     val sessionId: String = "",
 
-    val print: Boolean = true,
-    val printStatus: String = "PENDING"
+    val kitchenPrintReq: Boolean = true,
+    val kitchenPrinted: Boolean = false
 )

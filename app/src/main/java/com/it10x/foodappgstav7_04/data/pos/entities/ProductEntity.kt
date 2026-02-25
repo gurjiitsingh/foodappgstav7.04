@@ -31,11 +31,12 @@ data class ProductEntity(
 // FOOD TYPE (NEW ⭐)
 // =====================================================
     val foodType: String? = null,  // veg | non_veg | egg | vegan
+
     // =====================================================
     // SORTING (NEW ⭐)
     // =====================================================
     val sortOrder: Int = 0,        // lower = show first
-
+    val kitchenPrintReq: Boolean? = null,
     // =====================================================
     // CATEGORY
     // =====================================================

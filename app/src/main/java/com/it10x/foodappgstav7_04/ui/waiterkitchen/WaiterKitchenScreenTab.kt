@@ -1,4 +1,4 @@
-package com.it10x.foodappgstav7_04.ui.kitchen
+package com.it10x.foodappgstav7_04.ui.waiterkitchen
 
 import android.os.Build
 import android.provider.Settings
@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.SoupKitchen
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,17 +16,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-//import com.it10x.foodappgstav7_04.BuildConfig
 import com.it10x.foodappgstav7_04.ui.cart.CartRow
 import com.it10x.foodappgstav7_04.ui.cart.CartViewModel
 
 @Composable
-fun KitchenScreen(
+fun WaiterKitchenScreenTab(
     sessionId: String,
     tableNo: String,
     tableName: String,
     orderType: String,
-    kitchenViewModel: KitchenViewModel,
+    waiterkitchenViewModel: WaiterKitchenViewModel,
     cartViewModel: CartViewModel,
     onKitchenEmpty: () -> Unit
 ) {
@@ -78,7 +76,7 @@ fun KitchenScreen(
                         cartViewModel = cartViewModel,
                         tableNo = tableNo,
                         onCartActionDirectMoveToBill = { cartItem, print ->
-                            kitchenViewModel.sendSingleItemDirectlyToBill_Print_noPrint(
+                            waiterkitchenViewModel.sendSingleItemDirectlyToBill_Print_noPrint(
                                 cart = cartItem,
                                 orderType = orderType,
                                 tableNo = tableNo,
@@ -104,17 +102,17 @@ fun KitchenScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Order Summary",
+                    text = "Order Summary Waiter",
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
-                SummaryRow("Subtotal", "₹%.2f".format(subTotal))
-                SummaryRow("Tax", "₹%.2f".format(totalTax))
+                SummaryRowTab("Subtotal", "₹%.2f".format(subTotal))
+                SummaryRowTab("Tax", "₹%.2f".format(totalTax))
                 Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
-                SummaryRow(
+                SummaryRowTab(
                     "Grand Total",
                     "₹%.2f".format(grandTotal),
                     bold = true,
@@ -128,7 +126,8 @@ fun KitchenScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 🔹 Send All to Kitchen
+
+
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
@@ -137,14 +136,11 @@ fun KitchenScreen(
                             context.contentResolver,
                             Settings.Secure.ANDROID_ID
                         )
-                        kitchenViewModel.cartToBIll_KitchenPrint(
-                            orderType = orderType,
-                            tableNo = tableNo!!,
-                            sessionId = sessionId,
-                            paymentType = "UNPAID",
+                        waiterkitchenViewModel.waiterCartTo_FireStore_Bill(
+                            cartList = cartItems,
+                            tableNo = tableNo,
                             deviceId = deviceId,
-                            deviceName = Build.MODEL ?: "Unknown Device",
-                            appVersion = "BuildConfig.VERSION_NAME"
+                            deviceName = Build.MODEL ?: "Unknown Device"
                         )
                     }
                 ) {
@@ -154,7 +150,7 @@ fun KitchenScreen(
                         tint = Color.White
                     )
                     Spacer(Modifier.width(6.dp))
-                    Text("Send All to Bill", color = Color.White)
+                    Text("Send All", color = Color.White)
                 }
 
 
@@ -164,7 +160,7 @@ fun KitchenScreen(
 }
 
 @Composable
-fun SummaryRow(
+fun SummaryRowTab(
     label: String,
     value: String,
     bold: Boolean = false,

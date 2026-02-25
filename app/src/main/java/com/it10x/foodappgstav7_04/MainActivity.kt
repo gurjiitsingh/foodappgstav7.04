@@ -78,9 +78,12 @@ import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.google.firebase.FirebaseApp
+import com.google.firebase.FirebaseOptions
 import com.it10x.foodappgstav7_03.core.PosRole
 import com.it10x.foodappgstav7_03.core.PosRoleManager
 import com.it10x.foodappgstav7_03.ui.setting.DeviceRoleSelectionScreen
+import com.it10x.foodappgstav7_04.firebase.ClientRegistry
 
 class MainActivity : ComponentActivity() {
     private lateinit var globalOrderSyncManager: GlobalOrderSyncManager
@@ -88,35 +91,19 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        val serviceIntent = Intent(this, OrderListenerService::class.java)
-//        startForegroundService(serviceIntent)
         val role = PosRoleManager.getRole(this)
-
-        // ✅ START GLOBAL WAITER → POS SYNC
-        val firestore = FirebaseFirestore.getInstance()
-
-
-
         val db1 = AppDatabaseProvider.get(this)
-
-
         val kotRepository = KotRepository(
             batchDao = db1.kotBatchDao(),
             kotItemDao = db1.kotItemDao(),
             tableDao = db1.tableDao()
         )
-
         val printerManager = PrinterManager(this)
-
-
         val kotProcessor = KotProcessor(
             kotItemDao = db1.kotItemDao(),
             kotRepository = kotRepository,
             printerManager = printerManager
         )
-
-// Inject callback from BillViewModel
-        // MainActivity (or wherever BillViewModel exists)
         // 1️⃣ Get database instance
         val db = AppDatabaseProvider.get(this)
 
@@ -144,62 +131,11 @@ class MainActivity : ComponentActivity() {
 
         val kitchenVM: KitchenViewModel by viewModels { kitchenFactory }
 
-
-        globalOrderSyncManager = GlobalOrderSyncManager(
-            firestore = firestore,
-            kotProcessor = kotProcessor,
-            onWaiterOrderReceived = { orderId, tableNo, sessionId, items ->
-                // Convert each PosKotItemEntity → PosCartEntity
-                val cartItems: List<PosCartEntity> = items.map { kotItem ->
-                    PosCartEntity(
-                        productId = kotItem.productId,
-                        name = kotItem.name,
-                        categoryId = kotItem.categoryId,
-                        categoryName = kotItem.categoryName,
-                        parentId = kotItem.parentId,
-                        isVariant = kotItem.isVariant,
-                        basePrice = kotItem.basePrice,
-                        quantity = kotItem.quantity,
-                        taxRate = kotItem.taxRate,
-                        taxType = kotItem.taxType,
-                        sessionId = sessionId,          // 🔑 required
-                        tableId = tableNo,              // 🔑 required for DINE_IN
-                        note = kotItem.note,
-                        modifiersJson = kotItem.modifiersJson,
-                        sentToKitchen = true,           // mark as sent
-                        createdAt = kotItem.createdAt   // preserve original timestamp
-                    )
-                }
-
-
-                kitchenVM.waiterOrderToKitchen(
-                    orderType = "DINE_IN",
-                    tableNo = tableNo,
-                    sessionId = sessionId,
-                    items = cartItems, // ✅ now correct type
-                    deviceId = "WAITER",
-                    deviceName = "WAITER_DEVICE"
-                )
-            }
-        )
-
-
-        if (role == PosRole.MAIN) {
-            globalOrderSyncManager.startListening()
-        }
-
         setContent {
 
-
             val themeVM: ThemeViewModel = viewModel()
-
-
-
             val themeModeString by themeVM.themeMode.collectAsState()
             val themeMode = PosThemeMode.valueOf(themeModeString)
-
-
-
 
             FoodPosTheme(
                 mode = themeMode
@@ -215,6 +151,63 @@ class MainActivity : ComponentActivity() {
                 return@FoodPosTheme
             }
 
+                // ✅ Initialize Firebase dynamically now
+                val config = ClientRegistry.get(clientId)
+                if (FirebaseApp.getApps(context).isEmpty()) {
+                    val options = FirebaseOptions.Builder()
+                        .setApiKey(config.apiKey)
+                        .setApplicationId(config.applicationId)
+                        .setProjectId(config.projectId)
+                        .build()
+                    FirebaseApp.initializeApp(context, options)
+                }
+
+// ✅ now safe
+                val firestore = remember { FirebaseFirestore.getInstance() }
+
+                globalOrderSyncManager = GlobalOrderSyncManager(
+                    firestore = firestore,
+                    kotProcessor = kotProcessor,
+                    onWaiterOrderReceived = { orderId, tableNo, sessionId, items ->
+                        // Convert each PosKotItemEntity → PosCartEntity
+                        val cartItems: List<PosCartEntity> = items.map { kotItem ->
+                            PosCartEntity(
+                                productId = kotItem.productId,
+                                name = kotItem.name,
+                                categoryId = kotItem.categoryId,
+                                categoryName = kotItem.categoryName,
+                                kitchenPrintReq = kotItem.kitchenPrintReq,
+                                parentId = kotItem.parentId,
+                                isVariant = kotItem.isVariant,
+                                basePrice = kotItem.basePrice,
+                                quantity = kotItem.quantity,
+                                taxRate = kotItem.taxRate,
+                                taxType = kotItem.taxType,
+                                sessionId = sessionId,          // 🔑 required
+                                tableId = tableNo,              // 🔑 required for DINE_IN
+                                note = kotItem.note,
+                                modifiersJson = kotItem.modifiersJson,
+                                sentToKitchen = true,           // mark as sent
+                                createdAt = kotItem.createdAt   // preserve original timestamp
+                            )
+                        }
+
+
+                        kitchenVM.waiterOrderToKitchen(
+                            orderType = "DINE_IN",
+                            tableNo = tableNo,
+                            sessionId = sessionId,
+                            items = cartItems, // ✅ now correct type
+                            deviceId = "WAITER",
+                            deviceName = "WAITER_DEVICE"
+                        )
+                    }
+                )
+                if (role == PosRole.MAIN) {
+                    LaunchedEffect(Unit) {
+                        globalOrderSyncManager.startListening()
+                    }
+                }
                 val role = PosRoleManager.getRole(context)
 
                 val startDestination = when (role) {

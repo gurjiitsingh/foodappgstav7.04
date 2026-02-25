@@ -21,7 +21,7 @@ data class CategoryEntity(
     val sortOrder: Int = 0,
     val slug: String? = null,
     val isFeatured: Boolean = false,
-
+    val kitchenPrintReq: Boolean? = null,
     // Sync safety
     val updatedAt: Long? = null,
     val isDeleted: Boolean = false,

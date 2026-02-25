@@ -23,11 +23,11 @@ class KotProcessor(
         items: List<PosKotItemEntity>
     ) {
 
-        Log.d("WAITER_KOT", "==============================")
-        Log.d("WAITER_KOT", "Incoming Waiter Order")
-        Log.d("WAITER_KOT", "Table: $tableNo | Session: $sessionId")
-        Log.d("WAITER_KOT", "Items Count: ${items.size}")
-        Log.d("WAITER_KOT", "==============================")
+//        Log.d("WAITER_KOT", "==============================")
+//        Log.d("WAITER_KOT", "Incoming Waiter Order")
+//        Log.d("WAITER_KOT", "Table: $tableNo | Session: $sessionId")
+//        Log.d("WAITER_KOT", "Items Count: ${items.size}")
+//        Log.d("WAITER_KOT", "==============================")
 
         // 1️⃣ Insert / Update All Items First
         items.forEach { item ->
@@ -38,13 +38,13 @@ class KotProcessor(
             val totalQty = existingQty + item.quantity
 
             Log.d(
-                "WAITER_KOT",
-                "Item: ${item.name} | IncomingQty=${item.quantity} | ExistingQty=$existingQty | FinalQty=$totalQty"
+                "WAITER_KOT1",
+                "Item: ${item.name} |  kitchenPrintReq=${item.kitchenPrintReq} | kitchenPrinted=${item.kitchenPrinted}"
             )
 
             if (existingQty > 0) {
                 kotItemDao.updateQuantity(id, totalQty)
-                Log.d("WAITER_KOT", "Updated existing item: $id")
+               // Log.d("WAITER_KOT", "Updated existing item: $id")
             } else {
                 kotItemDao.insert(
                     item.copy(
@@ -58,20 +58,21 @@ class KotProcessor(
                         createdAt = System.currentTimeMillis()
                     )
                 )
-                Log.d("WAITER_KOT", "Inserted new item: $id")
+                //Log.d("WAITER_KOT", "Inserted new item: $id")
             }
         }
 
         // 2️⃣ Fetch Unprinted Items
         val unprintedItems = kotItemDao.getItemsToPrintForKitchen(tableNo)
 
-        Log.d("WAITER_KOT", "------------------------------")
-        Log.d("WAITER_KOT", "Unprinted Items Count: ${unprintedItems.size}")
+        Log.d("WAITER_KOT1", "------------------------------")
+        Log.d("WAITER_KOT1", "Unprinted Items Count: ${unprintedItems.size}")
 
         unprintedItems.forEach {
+
             Log.d(
-                "WAITER_KOT_PRINT",
-                "PRINT -> ${it.name} | Qty=${it.quantity} | Printed=${it.kitchenPrintReq}"
+                "WAITER_KOT1",
+                "PRINT -> ${it.name} | Qty=${it.quantity} | kitchenPrintReq=${it.kitchenPrintReq}"
             )
         }
 
@@ -80,7 +81,7 @@ class KotProcessor(
         if (unprintedItems.isNotEmpty()) {
 
             // 3️⃣ Print Once
-            Log.d("WAITER_KOT", "Sending items to PrinterManager...")
+            Log.d("WAITER_KOT_PRINT", "Sending items to PrinterManager...")
 
             printerManager.printTextKitchen(
                 PrinterRole.KITCHEN,
@@ -88,11 +89,13 @@ class KotProcessor(
                 orderType = orderType,
                 items = unprintedItems
             )
-
             // 4️⃣ Mark Printed
+
+//            val ids = unprintedItems.map { it.id }
+//            kotItemDao.markKitchenPrinted(ids)
+
             kotRepository.markDoneAll(tableNo)
             kotRepository.syncBillCount(tableNo)
-
             Log.d("WAITER_KOT", "✅ Printing Completed for table=$tableNo")
         } else {
             Log.d("WAITER_KOT", "⚠️ No items to print")

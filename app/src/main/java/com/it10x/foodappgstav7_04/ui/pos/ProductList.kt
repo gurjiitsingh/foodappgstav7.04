@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -198,35 +199,58 @@ private fun ParentProductCard(
                 }
 
                 // ➕ Add (unchanged behavior)
+//                IconButton(
+//                    onClick = {
+//                        cartViewModel.addToCart(
+//                            PosCartEntity(
+//                                productId = product.id,
+//                                name = toTitleCase(product.name),
+//                                basePrice = price,
+//                                note = "",
+//                                modifiersJson = "",
+//                                quantity = 1,
+//                                taxRate = product.taxRate ?: 0.0,
+//                                taxType = product.taxType ?: "inclusive",
+//                                parentId = null,
+//                                isVariant = false,
+//                                categoryId = product.categoryId,
+//                                categoryName = product.productCat,
+//                                kitchenPrintReq = true,
+//                                sessionId = sessionId,
+//                                tableId = tableNo
+//                            )
+//                        )
+//                        onProductAdded()
+//                        tableViewModel.markOrdering(tableNo)
+//                    },
+//                    modifier = Modifier
+//                        .size(width = 40.dp, height = 32.dp)
+//                        .background(addBg, RectangleShape)
+//                )
+
                 IconButton(
                     onClick = {
-                        cartViewModel.addToCart(
-                            PosCartEntity(
-                                productId = product.id,
-                                name = toTitleCase(product.name),
-                                basePrice = price,
-                                note = "",
-                                modifiersJson = "",
-                                quantity = 1,
-                                taxRate = product.taxRate ?: 0.0,
-                                taxType = product.taxType ?: "inclusive",
-                                parentId = null,
-                                isVariant = false,
-                                categoryId = product.categoryId,
-                                categoryName = product.productCat,
-                                sessionId = sessionId,
-                                tableId = tableNo
-                            )
+                        cartViewModel.addProductToCart(
+                            product = product,
+                            price = price
                         )
                         onProductAdded()
                         tableViewModel.markOrdering(tableNo)
                     },
                     modifier = Modifier
                         .size(width = 40.dp, height = 32.dp)
-                        .background(addBg, RectangleShape)
+                        .background(
+                            color = addBg.copy(alpha = 0.85f),
+                            shape = RoundedCornerShape(8.dp) // 👈 perfect POS feel
+                        )
                 ) {
-                    Text("+", color = addText, fontSize = 18.sp)
+                    Text(
+                        "+",
+                        color = addText,
+                        fontSize = 18.sp
+                    )
                 }
+
             }
 
         }

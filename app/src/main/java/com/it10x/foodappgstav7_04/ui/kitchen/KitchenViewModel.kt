@@ -91,7 +91,7 @@ class KitchenViewModel(
             kotRepository.syncBillCount(itemId)
 
             // ❌ If already printed → DO NOT PRINT AGAIN
-            if (item.print || !print) return@launch
+            if (item.kitchenPrinted || !print) return@launch
 
             printerManager.printTextKitchen(
                 PrinterRole.KITCHEN,
@@ -113,7 +113,7 @@ class KitchenViewModel(
             val item = kotItemDao.getItemByIdSync(itemId) ?: return@launch
 
             // ❌ If already printed → DO NOT PRINT AGAIN
-            if (item.print || !print) return@launch
+            if (item.kitchenPrinted || !print) return@launch
 
 
 
@@ -461,7 +461,7 @@ class KitchenViewModel(
                         taxType = cart.taxType,
                         note = cart.note,
                         modifiersJson = cart.modifiersJson,
-                        print = false,
+                        kitchenPrinted = false,
                         status = "DONE",   // ✅ REQUIRED
                         createdAt = now
                     )
@@ -534,7 +534,7 @@ class KitchenViewModel(
                 note = cart.note,
                 modifiersJson = cart.modifiersJson,
                 status = "DONE",
-                print = false,
+                kitchenPrinted = false,
                 createdAt = now
             )
 
@@ -618,18 +618,37 @@ class KitchenViewModel(
                     taxType = cart.taxType,
                     note = cart.note,
                     modifiersJson = cart.modifiersJson,
-                    print = false,
+                    kitchenPrintReq = cart.kitchenPrintReq,
+                    kitchenPrinted = false,
                     status = "DONE",
                     createdAt = now
                 )
             }
 
             kotRepository.insertItemsAndSync(tableNo, items)
+            Log.d("WAITER_KOT", "WAITER_KOT ------------------------------")
+
+//            val allItems = kotItemDao.getAllItems(tableNo)
+//            allItems.forEach {
+//                Log.d(
+//                    "WAITER_KOT",
+//                    "PRINT -> ${it} - ${it.name} | Qty=${it.quantity} | Printed=${it.kitchenPrintReq}"
+//                )
+//            }
+
+
 
             // 🔥 PRINT (still inside same coroutine)
             val unprintedItems = kotItemDao.getUnprintedItems(tableNo)
 
             if (unprintedItems.isNotEmpty()) {
+                Log.d("WAITER_KOT", "Unprinted Items Count: ${unprintedItems.size}")
+                unprintedItems.forEach {
+                    Log.d(
+                        "WAITER_KOT",
+                        "PRINT -> ${it.name} | Qty=${it.quantity} | kitchenPrintReq=${it.kitchenPrintReq} kitchenPrinted=${it.kitchenPrinted}"
+                    )
+                }
                 printerManager.printTextKitchen(
                     PrinterRole.KITCHEN,
                     sessionKey = tableNo,
@@ -740,7 +759,7 @@ class KitchenViewModel(
                     items.forEach { item ->
                         Log.d(
                             "KITCHEN_DEBUG1",
-                            "Status=${item.status},print=${item.print}, Table=${item.tableNo},Name=${item.name},  BatchId=${item.kotBatchId},ID=${item.id}"
+                            "Status=${item.status},print=${item.kitchenPrinted}, Table=${item.tableNo},Name=${item.name},  BatchId=${item.kotBatchId},ID=${item.id}"
                         )
                     }
                 }

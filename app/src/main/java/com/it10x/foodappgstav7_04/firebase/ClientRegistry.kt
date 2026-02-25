@@ -41,24 +41,4 @@ object ClientRegistry {
 
 
 
-//object ClientRegistry {
-//
-//    fun get(clientId: String): ClientFirebaseConfig {
-//        return when (clientId) {
-//
-//            "CLIENT_A" -> ClientFirebaseConfig(
-//                apiKey = "AIzaSyXXXX",
-//                applicationId = "1:1234567890:android:abc123",
-//                projectId = "client-a-project"
-//            )
-//
-//            "CLIENT_B" -> ClientFirebaseConfig(
-//                apiKey = "AIzaSyYYYY",
-//                applicationId = "1:9999999999:android:def456",
-//                projectId = "client-b-project"
-//            )
-//
-//            else -> throw IllegalArgumentException("Unknown client")
-//        }
-//    }
-//}
+

@@ -16,6 +16,10 @@ interface CategoryDao {
 
     @Query("DELETE FROM categories")
     suspend fun clear()
+
+    @Query("SELECT * FROM categories WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): CategoryEntity?
+
 }
 
 
@@ -39,29 +43,4 @@ interface CategoryDao {
 //
 //    @Query("DELETE FROM categories")
 //    suspend fun clear()
-//
-//
-//    //extra
-//
-//    @Query("SELECT * FROM cart")
-//    fun getCart(): Flow<List<PosCartEntity>>
-//
-//    @Insert(onConflict = OnConflictStrategy.REPLACE)
-//    suspend fun insert(item: PosCartEntity)
-//
-//    @Query("DELETE FROM cart")
-//    suspend fun clearCart()
-//
-//    @Query("SELECT * FROM cart WHERE productId = :id LIMIT 1")
-//    suspend fun getById(id: String): PosCartEntity?
-//
-//    @Update
-//    suspend fun update(item: PosCartEntity)
-//
-//    @Delete
-//    suspend fun delete(item: PosCartEntity)
-//
-//
-//
-//
 //}

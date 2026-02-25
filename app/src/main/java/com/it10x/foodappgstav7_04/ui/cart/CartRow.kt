@@ -2,7 +2,9 @@ package com.it10x.foodappgstav7_04.ui.cart
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Receipt
@@ -19,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.it10x.foodappgstav7_04.data.pos.entities.PosCartEntity
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Kitchen
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.style.TextOverflow
 import com.it10x.foodappgstav7_04.ui.theme.PosTheme
@@ -36,7 +39,7 @@ fun CartRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 0.dp),
+            .height(48.dp),   // ✅ Increased row height
         verticalAlignment = Alignment.CenterVertically
     ) {
 
@@ -54,9 +57,9 @@ fun CartRow(
 
         // 🧾 NAME COLUMN
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 4.dp, end = 6.dp)
+
+                    modifier = Modifier
+                    .weight(1f)
         ) {
 
             Text(
@@ -81,30 +84,33 @@ fun CartRow(
             }
         }
 
-        // ➕ QTY
+
         Row(
             modifier = Modifier.width(110.dp),
             verticalAlignment = Alignment.CenterVertically,
+
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
-            // ➖ Remove
+
+
             IconButton(
                 onClick = { cartViewModel.decrease(item.productId, tableNo) },
                 modifier = Modifier
-                    .size(25.dp)
+                    .size(20.dp)
                     .background(
-                        PosTheme.accent.cartRemoveBorder,
+                        PosTheme.accent.cartAddBg,
                         shape = MaterialTheme.shapes.small
                     )
             ) {
                 Text(
-                    "−",
-                    color = PosTheme.accent.cartRemoveText,
+                    "-",
+                    color = PosTheme.accent.cartAddText,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
             }
+
 
             Text(
                 text = item.quantity.toString(),
@@ -117,7 +123,7 @@ fun CartRow(
             IconButton(
                 onClick = { cartViewModel.increase(item) },
                 modifier = Modifier
-                    .size(25.dp)
+                    .size(20.dp)
                     .background(
                         PosTheme.accent.cartAddBg,
                         shape = MaterialTheme.shapes.small
@@ -138,23 +144,23 @@ fun CartRow(
 
 
                 // 🖨️ Toggle Print Button
-                IconButton(
-                    onClick = {
-                        cartViewModel.togglePrint(item)
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.SoupKitchen,
-                        contentDescription = "Kitchen Print",
-                        tint = if (item.print)
-                            Color.Gray              // Already sent to kitchen
-                        else
-                            MaterialTheme.colorScheme.primary  // Will print to kitchen
-                    )
-                }
+        IconButton(
+            onClick = { cartViewModel.togglePrint(item) },
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.SoupKitchen,
+                contentDescription = "Kitchen Print",
+                tint = if (item.kitchenPrintReq)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+            )
+        }
 
 
-            }
+
+    }
 
     Spacer(Modifier.height(3.dp))
     Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))

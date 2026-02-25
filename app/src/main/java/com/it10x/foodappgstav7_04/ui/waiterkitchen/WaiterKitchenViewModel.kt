@@ -230,7 +230,7 @@ class WaiterKitchenViewModel(
                     taxType = cart.taxType,
                     note = cart.note,
                     modifiersJson = cart.modifiersJson,
-                    print = true,
+                    kitchenPrinted = true,
                     status = "DONE",
                     createdAt = now
                 )
@@ -404,7 +404,7 @@ class WaiterKitchenViewModel(
                 note = cart.note,
                 modifiersJson = cart.modifiersJson,
                 status = "DONE",
-                print = false,
+                kitchenPrinted = false,
                 createdAt = now
             )
 
@@ -486,7 +486,7 @@ class WaiterKitchenViewModel(
                     taxType = cart.taxType,
                     note = cart.note,
                     modifiersJson = cart.modifiersJson,
-                    print = false,
+                    kitchenPrinted = false,
                     status = "DONE",
                     createdAt = now
                 )

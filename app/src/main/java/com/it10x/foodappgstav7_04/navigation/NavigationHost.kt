@@ -45,6 +45,7 @@ import com.it10x.foodappgstav7_04.data.pos.repository.POSOrdersRepository
 
 
 import com.it10x.foodappgstav7_04.data.pos.repository.CartRepository
+import com.it10x.foodappgstav7_04.data.pos.repository.CategoryRepository
 import com.it10x.foodappgstav7_04.data.pos.repository.CustomerLedgerRepository
 import com.it10x.foodappgstav7_04.data.pos.repository.CustomerRepository
 import com.it10x.foodappgstav7_04.domain.usecase.TableReleaseUseCase
@@ -237,9 +238,12 @@ fun NavigationHost(
 
             val cartViewModel: CartViewModel = viewModel(
                 factory = CartViewModelFactory(
-                        repository = CartRepository(
+                    repository = CartRepository(
                         db.cartDao(),
                         db.tableDao()
+                    ),
+                    categoryRepository = CategoryRepository(   // ✅ ADD THIS
+                        db.categoryDao()
                     ),
                     tableReleaseUseCase = tableReleaseUseCase
                 )
@@ -264,9 +268,12 @@ fun NavigationHost(
 
             val cartViewModel: CartViewModel = viewModel(
                 factory = CartViewModelFactory(
-                         repository = CartRepository(
+                    repository = CartRepository(
                         db.cartDao(),
                         db.tableDao()
+                    ),
+                    categoryRepository = CategoryRepository(   // ✅ ADD THIS
+                        db.categoryDao()
                     ),
                     tableReleaseUseCase = tableReleaseUseCase
                 )
@@ -300,6 +307,9 @@ fun NavigationHost(
                         db.cartDao(),
                         db.tableDao()
                     ),
+                    categoryRepository = CategoryRepository(   // ✅ ADD THIS
+                        db.categoryDao()
+                    ),
                     tableReleaseUseCase = tableReleaseUseCase
                 )
             )
@@ -328,6 +338,9 @@ fun NavigationHost(
                     repository = CartRepository(
                         db.cartDao(),
                         db.tableDao()
+                    ),
+                    categoryRepository = CategoryRepository(   // ✅ ADD THIS
+                        db.categoryDao()
                     ),
                     tableReleaseUseCase = tableReleaseUseCase
                 )

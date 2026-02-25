@@ -7,10 +7,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.it10x.foodappgstav7_04.data.pos.repository.CartRepository
+import com.it10x.foodappgstav7_04.data.pos.repository.CategoryRepository
 import com.it10x.foodappgstav7_04.domain.usecase.TableReleaseUseCase
 
 class CartViewModelFactory(
     private val repository: CartRepository,
+    private val categoryRepository: CategoryRepository,
     private val tableReleaseUseCase: TableReleaseUseCase
 ) : ViewModelProvider.Factory {
 
@@ -22,6 +24,7 @@ class CartViewModelFactory(
             val handle: SavedStateHandle = extras.createSavedStateHandle()
             return CartViewModel(
                 repository = repository,
+                categoryRepository = categoryRepository,
                 tableReleaseUseCase = tableReleaseUseCase,
                 savedStateHandle = handle
             ) as T

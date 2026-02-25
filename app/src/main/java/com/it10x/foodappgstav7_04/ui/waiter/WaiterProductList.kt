@@ -173,38 +173,29 @@ private fun ParentProductCard(
             // ➕ Add Button
             Button(
                 onClick = {
-                    cartViewModel.addToCart(
-                        PosCartEntity(
-                            productId = product.id,
-                            name = toTitleCase(product.name),
-                            basePrice = price,
-                            note = "",
-                            modifiersJson = "",
-                            quantity = 1,
-                            taxRate = product.taxRate ?: 0.0,
-                            taxType = product.taxType ?: "inclusive",
-                            parentId = null,
-                            isVariant = false,
-                            categoryId = product.categoryId,
-                            categoryName = product.productCat,
-                            sessionId = sessionId,
-                            tableId = tableNo
-                        )
+                    cartViewModel.addProductToCart(
+                        product = product,
+                        price = price
                     )
                     onProductAdded()
                     tableViewModel.markOrdering(tableNo)
                 },
-                modifier = Modifier.size(34.dp),
+                modifier = Modifier.size(width = 40.dp, height = 34.dp),
+                shape = RoundedCornerShape(6.dp),   // small POS rounded
                 contentPadding = PaddingValues(0.dp),
-                shape = RoundedCornerShape(6.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2E7D32),
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f),
                     contentColor = Color.White
                 ),
-                elevation = ButtonDefaults.buttonElevation(0.dp)
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
-                Text("+", fontSize = 18.sp)
+                Text(
+                    "+",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
+
         }
     }
 }

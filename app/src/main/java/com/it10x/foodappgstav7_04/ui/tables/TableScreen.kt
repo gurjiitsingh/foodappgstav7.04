@@ -933,13 +933,22 @@ fun CategoryButton(
 fun FloatingCartButton(
     count: Int,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    height: Dp = 52.dp,
+    shape: Shape = RoundedCornerShape(8.dp)
 ) {
-    Box(modifier = modifier) {
+    Box(
+        modifier = modifier.size(height)
+    ) {
 
-        FloatingActionButton(
+        IconButton(
             onClick = onClick,
-            containerColor = MaterialTheme.colorScheme.primary
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    MaterialTheme.colorScheme.primary,
+                    shape = shape
+                )
         ) {
             Icon(
                 imageVector = Icons.Default.ShoppingCart,
@@ -953,13 +962,13 @@ fun FloatingCartButton(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .offset(x = 6.dp, y = (-6).dp)
-                    .size(22.dp)
+                    .size(20.dp)
                     .background(Color.Red, shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = count.toString(),
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = Color.White,
                     style = MaterialTheme.typography.labelSmall
                 )
             }
@@ -988,7 +997,7 @@ fun OrderChip(
     ) {
         Box(
             modifier = Modifier
-                .padding(horizontal = 14.dp)
+                .padding(horizontal = 10.dp)
                 .fillMaxHeight(),
             contentAlignment = Alignment.Center
         ) {
@@ -1013,7 +1022,7 @@ fun PosOrderTypeButton(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
-    shape: Shape = RoundedCornerShape(8.dp),   // ✅ add this
+    shape: Shape = RoundedCornerShape(5.dp),   // ✅ add this
     height: Dp = 52.dp                         // ✅ add this
 ) {
     Button(

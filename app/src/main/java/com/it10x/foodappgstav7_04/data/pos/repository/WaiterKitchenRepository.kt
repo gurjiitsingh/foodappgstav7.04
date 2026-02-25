@@ -27,18 +27,14 @@ class WaiterKitchenRepository(
             if (cartList.isEmpty()) return false
 
 
-            Log.d("WAITER_FIRESTORE", "==============================")
-            Log.d("WAITER_FIRESTORE", "Sending order to Firestore")
-            Log.d("WAITER_FIRESTORE", "Table: $tableNo | Session: $sessionId")
-            Log.d("WAITER_FIRESTORE", "Cart Size: ${cartList.size}")
-            Log.d("WAITER_FIRESTORE", "==============================")
 
-            cartList.forEach {
-                Log.d(
-                    "WAITER_CART_DEBUG",
-                    "Cart -> ${it.name} | Qty=${it.quantity} | print=${it.print}"
-                )
-            }
+
+//            cartList.forEach {
+//                Log.d(
+//                    "WAITER_CART_DEBUG",
+//                    "Cart -> ${it.name} | Qty=${it.quantity} | kitchenPrintReq=${it.kitchenPrintReq}"
+//                )
+//            }
 
             val orderId = firestore.collection("waiter_orders").document().id
             val batch = firestore.batch()
@@ -74,8 +70,8 @@ class WaiterKitchenRepository(
                     taxRate = cartItem.taxRate,
                     tableNo = tableNo,
                     sessionId = sessionId,
-                    print = cartItem.print,
-                    printStatus = if (cartItem.print) "PENDING" else "SKIPPED"
+                    kitchenPrintReq = cartItem.kitchenPrintReq,
+                    kitchenPrinted = false
                 )
 
                 batch.set(itemRef, orderItem)
@@ -83,7 +79,7 @@ class WaiterKitchenRepository(
 
             batch.commit().await()
 
-            Log.d("WAITER_FIRESTORE", "Order uploaded with ${cartList.size} items")
+        //    Log.d("WAITER_FIRESTORE", "Order uploaded with ${cartList.size} items")
 
             true
 
@@ -95,70 +91,3 @@ class WaiterKitchenRepository(
 
 }
 
-
-
-//class WaiterKitchenRepository {
-//
-//    private val firestore: FirebaseFirestore =
-//        FirebaseFirestore.getInstance()
-//
-//    suspend fun uploadItems(
-//        cartItems: List<PosCartEntity>,
-//        tableNo: String,
-//        sessionId: String,
-//        orderType: String,
-//        deviceId: String,
-//        deviceName: String?,
-//        sendToKitchen: Boolean
-//    ): Boolean {
-//
-//        return try {
-//
-//            val batch = firestore.batch()
-//
-//            cartItems.forEach { cart ->
-//
-//                val docRef = firestore
-//                    .collection("waiter_orders")
-//                    .document()
-//
-//                val data = hashMapOf(
-//                    "productId" to cart.productId,
-//                    "name" to cart.name,
-//                    "categoryId" to cart.categoryId,
-//                    "categoryName" to cart.categoryName,
-//                    "parentId" to cart.parentId,
-//                    "isVariant" to cart.isVariant,
-//                    "quantity" to cart.quantity,
-//                    "basePrice" to cart.basePrice,
-//                    "taxRate" to cart.taxRate,
-//                    "taxType" to cart.taxType,
-//                    "note" to cart.note,
-//                    "modifiersJson" to cart.modifiersJson,
-//
-//                    "tableNo" to tableNo,
-//                    "sessionId" to sessionId,
-//                    "orderType" to orderType,
-//
-//                    "deviceId" to deviceId,
-//                    "deviceName" to deviceName,
-//
-//                    "sendToKitchen" to sendToKitchen,
-//                    "status" to "PENDING",
-//                    "createdAt" to System.currentTimeMillis()
-//                )
-//
-//                batch.set(docRef, data)
-//            }
-//
-//            batch.commit().await()
-//
-//            Log.d("WAITER_FIRESTORE", "Uploaded ${cartItems.size} items")
-//            true
-//
-//        } catch (e: Exception) {
-//            Log.e("WAITER_FIRESTORE", "Upload failed", e)
-//            false
-//        }
-//    }
-//}

@@ -5,8 +5,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.it10x.foodappgstav7_04.data.pos.entities.PosCartEntity
+import com.it10x.foodappgstav7_04.data.pos.entities.ProductEntity
 import com.it10x.foodappgstav7_04.data.pos.repository.CartRepository
+import com.it10x.foodappgstav7_04.data.pos.repository.CategoryRepository
 import com.it10x.foodappgstav7_04.domain.usecase.TableReleaseUseCase
+import com.it10x.foodappgstav7_04.ui.pos.toTitleCase
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -17,6 +20,7 @@ sealed class CartUiEvent {
 
 class CartViewModel(
     private val repository: CartRepository,
+    private val categoryRepository: CategoryRepository,
     private val tableReleaseUseCase: TableReleaseUseCase,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -90,6 +94,53 @@ class CartViewModel(
     }
 
     // ---------- MUTATIONS ----------
+    fun addProductToCart(
+        product: ProductEntity,
+        price: Double
+    ) {
+        viewModelScope.launch {
+
+            if (sessionId.value.isNullOrBlank()) {
+                _uiEvent.emit(CartUiEvent.SessionRequired)
+                initSession(currentOrderType.value, currentTableId.value)
+            }
+
+            if (!canMutateCart()) {
+                _uiEvent.emit(CartUiEvent.TableRequired)
+                return@launch
+            }
+
+            val category = categoryRepository.getCategoryById(product.categoryId)
+
+            val resolvedKitchenPrint =
+                product.kitchenPrintReq
+                    ?: category?.kitchenPrintReq
+                    ?: true
+
+            val cartItem = PosCartEntity(
+                productId = product.id,
+                name = toTitleCase(product.name),
+                basePrice = price,
+                note = "",
+                modifiersJson = "",
+                quantity = 1,
+                taxRate = product.taxRate ?: 0.0,
+                taxType = product.taxType ?: "inclusive",
+                parentId = null,
+                isVariant = false,
+                categoryId = product.categoryId,
+                categoryName = product.productCat,
+                kitchenPrintReq = resolvedKitchenPrint,
+                sessionId = sessionId.value!!,
+                tableId = currentTableId.value
+            )
+
+            repository.addToCart(cartItem, currentTableId.value!!)
+            repository.syncCartCount(currentTableId.value!!)
+        }
+    }
+
+
     fun addToCart(product: PosCartEntity) {
 
         viewModelScope.launch {
@@ -202,7 +253,7 @@ class CartViewModel(
         viewModelScope.launch {
             repository.updatePrintFlag(
                 id = item.id,
-                value = !item.print
+                value = !item.kitchenPrintReq
             )
         }
     }
