@@ -73,9 +73,9 @@ class GlobalOrderSyncManager(
                                         itemDoc.getString("categoryId") ?: ""
                                     val categoryName =
                                         itemDoc.getString("categoryName") ?: "WAITER"
-                                    val isPrint =
-                                        itemDoc.getBoolean("isPrint") ?: "WAITER"
-
+                                    val kitchenPrintReq =
+                                        itemDoc.getBoolean("kitchenPrintReq") ?: true
+                                    Log.d("WAITER_KOT_PRINT", "name: $name | print=$kitchenPrintReq")
                                     PosKotItemEntity(
                                         id = "${productId}_$tableNo",
                                         sessionId = sessionId,
@@ -94,8 +94,8 @@ class GlobalOrderSyncManager(
                                         status = "DONE",
                                         note = "",
                                         modifiersJson = modifiersJson,
-                                        print = false,
-                                        printStatus = "PENDING",
+                                        kitchenPrintReq = kitchenPrintReq,
+                                        kitchenPrinted = false,
                                         createdAt = System.currentTimeMillis(),
                                         source = "WAITER",
                                         syncedToCloud = false,

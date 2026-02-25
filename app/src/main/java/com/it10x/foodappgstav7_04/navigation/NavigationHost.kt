@@ -15,6 +15,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.it10x.foodappgstav7_03.core.PosRole
+import com.it10x.foodappgstav7_03.core.PosRoleManager
+import com.it10x.foodappgstav7_03.ui.setting.DeviceRoleSelectionScreen
 import com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.pos.WaiterPosScreen
 import com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.tables.TableScreen
 import com.it10x.foodappgstav7_04.com.ui.settings.PrinterRoleSelectionScreen
@@ -120,9 +123,17 @@ fun NavigationHost(
     // NAV HOST
     // -----------------------------
 
+    val role = PosRoleManager.getRole(context)
+
+    val startDestination = when (role) {
+        null -> "device_role_selection"
+        PosRole.MAIN -> "tables"
+        PosRole.WAITER -> "posWaiter"
+    }
+
     NavHost(
         navController = navController,
-        startDestination = "pos",
+        startDestination = startDestination,
         modifier = Modifier.padding(paddingValues)
     ) {
 
@@ -433,6 +444,16 @@ fun NavigationHost(
 
         composable("theme_settings") {
             ThemeSettingsScreen()
+        }
+
+        composable("device_role_selection") {
+            DeviceRoleSelectionScreen(
+                onRoleSelected = {
+                    navController.navigate("pos") {
+                        popUpTo("device_role_selection") { inclusive = true }
+                    }
+                }
+            )
         }
 
 

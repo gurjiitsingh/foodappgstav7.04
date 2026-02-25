@@ -49,7 +49,7 @@ object PosOrderToKotMapper {
                 taxType = item.taxType,
 
                 status = "DONE",
-                print = false,
+                kitchenPrinted = false,
                 createdAt = now
             )
         }

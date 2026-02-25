@@ -78,6 +78,9 @@ import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.it10x.foodappgstav7_03.core.PosRole
+import com.it10x.foodappgstav7_03.core.PosRoleManager
+import com.it10x.foodappgstav7_03.ui.setting.DeviceRoleSelectionScreen
 
 class MainActivity : ComponentActivity() {
     private lateinit var globalOrderSyncManager: GlobalOrderSyncManager
@@ -87,11 +90,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 //        val serviceIntent = Intent(this, OrderListenerService::class.java)
 //        startForegroundService(serviceIntent)
-
+        val role = PosRoleManager.getRole(this)
 
         // ✅ START GLOBAL WAITER → POS SYNC
         val firestore = FirebaseFirestore.getInstance()
-        val kotItemDao = AppDatabaseProvider.get(this).kotItemDao()
+
 
 
         val db1 = AppDatabaseProvider.get(this)
@@ -179,11 +182,11 @@ class MainActivity : ComponentActivity() {
                 )
             }
         )
-        globalOrderSyncManager.startListening()
 
 
-
-
+        if (role == PosRole.MAIN) {
+            globalOrderSyncManager.startListening()
+        }
 
         setContent {
 
@@ -212,12 +215,20 @@ class MainActivity : ComponentActivity() {
                 return@FoodPosTheme
             }
 
+                val role = PosRoleManager.getRole(context)
 
+                val startDestination = when (role) {
+                    null -> "device_role_selection"
+                    PosRole.MAIN -> "tables"
+                    PosRole.WAITER -> "posWaiter"
+                }
             // ✅ START SERVICE ONLY NOW
-            LaunchedEffect(Unit) {
-                val serviceIntent = Intent(context, OrderListenerService::class.java)
-                context.startForegroundService(serviceIntent)
-            }
+                if (role == PosRole.MAIN) {
+                    LaunchedEffect(Unit) {
+                        val serviceIntent = Intent(context, OrderListenerService::class.java)
+                        context.startForegroundService(serviceIntent)
+                    }
+                }
 // ------------------------------------
 // CORE SINGLETON OBJECTS (ONCE)
 // ------------------------------------
@@ -281,226 +292,330 @@ class MainActivity : ComponentActivity() {
                                     style = MaterialTheme.typography.titleLarge,
                                     modifier = Modifier.padding(16.dp)
                                 )
+                                if (role == PosRole.MAIN) {
+                                    // ===============================
+                                    // OPERATIONS
+                                    // ===============================
+                                    SidebarSectionHeader("OPERATIONS")
 
-                                // ===============================
-                                // OPERATIONS
-                                // ===============================
-                                SidebarSectionHeader("OPERATIONS")
-
-                                NavigationDrawerItem(
-                                    label = { Text("POS") },
-                                    selected = false,
-                                    onClick = {
-                                        scope.launch { drawerState.close() }
-                                        navController.navigate("pos") {
-                                            popUpTo("pos") { inclusive = true }
+                                    NavigationDrawerItem(
+                                        label = { Text("POS") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("pos") {
+                                                popUpTo("pos") { inclusive = true }
+                                            }
                                         }
-                                    }
-                                )
+                                    )
 
-                                Divider(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(bottom = 4.dp),
-                                    thickness = 0.5.dp
-                                )
+                                    Divider(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 4.dp),
+                                        thickness = 0.5.dp
+                                    )
 
-                                NavigationDrawerItem(
-                                    label = { Text("POS Classic") },
-                                    selected = false,
-                                    onClick = {
-                                        scope.launch { drawerState.close() }
-                                        navController.navigate("posClassic") {
-                                            popUpTo("posClassic") { inclusive = true }
+                                    NavigationDrawerItem(
+                                        label = { Text("POS Classic") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("posClassic") {
+                                                popUpTo("posClassic") { inclusive = true }
+                                            }
                                         }
-                                    }
-                                )
+                                    )
 
-                                Divider(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(bottom = 4.dp),
-                                    thickness = 0.5.dp
-                                )
-                                NavigationDrawerItem(
-                                    label = { Text("Tables") },
-                                    selected = false,
-                                    onClick = {
-                                        scope.launch { drawerState.close() }
-                                        navController.navigate("Tables") {
-                                            popUpTo("Tables") { inclusive = true }
+                                    Divider(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 4.dp),
+                                        thickness = 0.5.dp
+                                    )
+                                    NavigationDrawerItem(
+                                        label = { Text("Tables") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("Tables") {
+                                                popUpTo("Tables") { inclusive = true }
+                                            }
                                         }
-                                    }
-                                )
+                                    )
 
-                                Divider(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(bottom = 4.dp),
-                                    thickness = 0.5.dp
-                                )
+                                    Divider(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 4.dp),
+                                        thickness = 0.5.dp
+                                    )
 
-                                Divider(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(bottom = 4.dp),
-                                    thickness = 0.5.dp
-                                )
+                                    Divider(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 4.dp),
+                                        thickness = 0.5.dp
+                                    )
 
-                                NavigationDrawerItem(
-                                    label = { Text("Waiter") },
-                                    selected = false,
-                                    onClick = {
-                                        scope.launch { drawerState.close() }
-                                        navController.navigate("posWaiter") {
-                                            popUpTo("posWaiter") { inclusive = true }
+                                    NavigationDrawerItem(
+                                        label = { Text("Online Orders") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("orders")
                                         }
-                                    }
-                                )
-
-                                NavigationDrawerItem(
-                                    label = { Text("Online Orders") },
-                                    selected = false,
-                                    onClick = {
-                                        scope.launch { drawerState.close() }
-                                        navController.navigate("orders")
-                                    }
-                                )
-                                Divider(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(bottom = 4.dp),
-                                    thickness = 0.5.dp
-                                )
-                                NavigationDrawerItem(
-                                    label = { Text("Local Orders") },
-                                    selected = false,
-                                    onClick = {
-                                        scope.launch { drawerState.close() }
-                                        navController.navigate("local_orders")
-                                    }
-                                )
-
-                                // ===============================
-                                // SALES / Z-REPORT
-                                // ===============================
-                                SidebarSectionHeader("REPORTS")
-
-                                NavigationDrawerItem(
-                                    label = { Text("Sales / Z-Report") },
-                                    selected = false,
-                                    onClick = {
-                                        scope.launch { drawerState.close() }
-                                        navController.navigate("sales") // opens SalesScreen
-                                    }
-                                )
-                                Divider(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(bottom = 4.dp),
-                                    thickness = 0.5.dp
-                                )
+                                    )
 
 
-                                // ===============================
+                                    Divider(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 4.dp),
+                                        thickness = 0.5.dp
+                                    )
+                                    NavigationDrawerItem(
+                                        label = { Text("Local Orders") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("local_orders")
+                                        }
+                                    )
+
+                                    // ===============================
+                                    // SALES / Z-REPORT
+                                    // ===============================
+                                    SidebarSectionHeader("REPORTS")
+
+                                    NavigationDrawerItem(
+                                        label = { Text("Sales / Z-Report") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("sales") // opens SalesScreen
+                                        }
+                                    )
+                                    Divider(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 4.dp),
+                                        thickness = 0.5.dp
+                                    )
+
+
+                                    // ===============================
 // CUSTOMERS
 // ===============================
-                                SidebarSectionHeader("CUSTOMERS")
+                                    SidebarSectionHeader("CUSTOMERS")
 
-                                NavigationDrawerItem(
-                                    label = { Text("Customer List") },
-                                    selected = false,
-                                    onClick = {
-                                        scope.launch { drawerState.close() }
-                                        navController.navigate("customers")
-                                    }
-                                )
+                                    NavigationDrawerItem(
+                                        label = { Text("Customer List") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("customers")
+                                        }
+                                    )
 
-                                Divider(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(bottom = 4.dp),
-                                    thickness = 0.5.dp
-                                )
+                                    Divider(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 4.dp),
+                                        thickness = 0.5.dp
+                                    )
 
-                                NavigationDrawerItem(
-                                    label = { Text("Delivery Settlement") },
-                                    selected = false,
-                                    onClick = { navController.navigate("delivery_settlement") }
-                                )
+                                    NavigationDrawerItem(
+                                        label = { Text("Delivery Settlement") },
+                                        selected = false,
+                                        onClick = { navController.navigate("delivery_settlement") }
+                                    )
 
-//                                NavigationDrawerItem(
-//                                    label = { Text("Customer Ledger") },
-//                                    selected = false,
-//                                    onClick = {
-//                                        navController.navigate("customer_list")
-//                                    },
-//                                    icon = {
-//                                        Icon(
-//                                            imageVector = Icons.Default.AccountBalance,
-//                                            contentDescription = "Customer Ledger"
-//                                        )
-//                                    }
-//                                )
 
-                                // ===============================
-                                // SYNC & DATA
-                                // ===============================
-                                SidebarSectionHeader("SYNC & DATA")
+                                    // ===============================
+                                    // SYNC & DATA
+                                    // ===============================
+                                    SidebarSectionHeader("SYNC & DATA")
 
-                                NavigationDrawerItem(
-                                    label = { Text("Sync") },
-                                    selected = false,
-                                    onClick = {
-                                        scope.launch { drawerState.close() }
-                                        navController.navigate("sync_data")
-                                    }
-                                )
+                                    NavigationDrawerItem(
+                                        label = { Text("Sync") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("sync_data")
+                                        }
+                                    )
 
-                                // ===============================
-                                // SETTINGS
-                                // ===============================
-                                SidebarSectionHeader("SETTINGS")
+                                    // ===============================
+                                    // SETTINGS
+                                    // ===============================
+                                    SidebarSectionHeader("SETTINGS")
 
-                                NavigationDrawerItem(
-                                    label = { Text("Printer Settings") },
-                                    selected = false,
-                                    onClick = {
-                                        scope.launch { drawerState.close() }
-                                        navController.navigate("printer_role_selection")
-                                    }
-                                )
+                                    NavigationDrawerItem(
+                                        label = { Text("Printer Settings") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("printer_role_selection")
+                                        }
+                                    )
 
-                                Divider(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(bottom = 4.dp),
-                                    thickness = 0.5.dp
-                                )
-                                NavigationDrawerItem(
-                                    label = { Text("Advanced Settings") },
-                                    selected = false,
-                                    onClick = {
-                                        scope.launch { drawerState.close() }
-                                        navController.navigate("advanced_settings")
-                                    }
-                                )
+                                    Divider(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 4.dp),
+                                        thickness = 0.5.dp
+                                    )
+                                    NavigationDrawerItem(
+                                        label = { Text("Advanced Settings") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("advanced_settings")
+                                        }
+                                    )
 
-                                Divider(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(bottom = 4.dp),
-                                    thickness = 0.5.dp
-                                )
+                                    Divider(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 4.dp),
+                                        thickness = 0.5.dp
+                                    )
 
-                                NavigationDrawerItem(
-                                    label = { Text("Theme Settings") },
-                                    selected = false,
-                                    onClick = {
-                                        scope.launch { drawerState.close() }
-                                        navController.navigate("theme_settings")
-                                    }
-                                )
+                                    NavigationDrawerItem(
+                                        label = { Text("Theme Settings") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("theme_settings")
+                                        }
+                                    )
+
+                                    SidebarSectionHeader("SETUP")
+
+                                    NavigationDrawerItem(
+                                        label = { Text("DEVICE") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("device_role_selection")
+                                        }
+                                    )
+
+                                    Divider(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 4.dp),
+                                        thickness = 0.5.dp
+                                    )
+                                }
+
+                                if (role == PosRole.WAITER) {
+                                    // ===============================
+                                    // OPERATIONS
+                                    // ===============================
+                                    SidebarSectionHeader("OPERATIONS")
+
+                                    NavigationDrawerItem(
+                                        label = { Text("Waiter") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("posWaiter") {
+                                                popUpTo("posWaiter") { inclusive = true }
+                                            }
+                                        }
+                                    )
+
+
+                                    NavigationDrawerItem(
+                                        label = { Text("Local Orders") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("local_orders")
+                                        }
+                                    )
+
+
+                                    // ===============================
+                                    // SYNC & DATA
+                                    // ===============================
+                                    SidebarSectionHeader("SYNC & DATA")
+
+                                    NavigationDrawerItem(
+                                        label = { Text("Sync") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("sync_data")
+                                        }
+                                    )
+
+
+
+
+
+                                    // ===============================
+                                    // SETTINGS
+                                    // ===============================
+                                    SidebarSectionHeader("SETTINGS")
+
+
+
+
+
+                                    Divider(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 4.dp),
+                                        thickness = 0.5.dp
+                                    )
+                                    NavigationDrawerItem(
+                                        label = { Text("Advanced Settings") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("advanced_settings")
+                                        }
+                                    )
+
+                                    Divider(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 4.dp),
+                                        thickness = 0.5.dp
+                                    )
+
+                                    NavigationDrawerItem(
+                                        label = { Text("Theme Settings") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("theme_settings")
+                                        }
+                                    )
+
+                                    SidebarSectionHeader("SETUP")
+
+                                    NavigationDrawerItem(
+                                        label = { Text("DEVICE") },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("device_role_selection")
+                                        }
+                                    )
+
+                                    Divider(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 4.dp),
+                                        thickness = 0.5.dp
+                                    )
+
+                                }
+
                             }
                         }
                     }
@@ -526,100 +641,163 @@ class MainActivity : ComponentActivity() {
                             },
 
                             // RIGHT → POS NAVIGATION ICONS
+
+
                             actions = {
 
                                 val commonShape = RoundedCornerShape(8.dp)
                                 val commonHeight = 48.dp
 
-                                // 🪑 TABLES
-                                IconButton(
-                                    onClick = {
-                                        navController.navigate("tables") {
-                                            launchSingleTop = true
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .size(commonHeight)
-                                        .background(
-                                            if (currentRoute == "tables")
-                                                MaterialTheme.colorScheme.primary
+                                // ✅ MAIN DEVICE UI
+                                if (role == PosRole.MAIN) {
+
+                                    // 🪑 TABLES
+                                    IconButton(
+                                        onClick = {
+                                            navController.navigate("tables") {
+                                                launchSingleTop = true
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .size(commonHeight)
+                                            .background(
+                                                if (currentRoute == "tables")
+                                                    MaterialTheme.colorScheme.primary
+                                                else
+                                                    MaterialTheme.colorScheme.surfaceVariant,
+                                                shape = commonShape
+                                            )
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.TableBar,
+                                            contentDescription = "Tables",
+                                            tint = if (currentRoute == "tables")
+                                                MaterialTheme.colorScheme.onPrimary
                                             else
-                                                MaterialTheme.colorScheme.surfaceVariant,
-                                            shape = commonShape
+                                                MaterialTheme.colorScheme.onSurfaceVariant
                                         )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.TableBar,
-                                        contentDescription = "Tables",
-                                        tint = if (currentRoute == "tables")
-                                            MaterialTheme.colorScheme.onPrimary
-                                        else
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    }
+
+                                    Spacer(Modifier.width(6.dp))
+
+                                    // 🖥 POS
+                                    IconButton(
+                                        onClick = {
+                                            navController.navigate("pos") {
+                                                launchSingleTop = true
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .size(commonHeight)
+                                            .background(
+                                                if (currentRoute == "pos")
+                                                    MaterialTheme.colorScheme.primary
+                                                else
+                                                    MaterialTheme.colorScheme.surfaceVariant,
+                                                shape = commonShape
+                                            )
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.PointOfSale,
+                                            contentDescription = "POS",
+                                            tint = if (currentRoute == "pos")
+                                                MaterialTheme.colorScheme.onPrimary
+                                            else
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+
+                                    Spacer(Modifier.width(6.dp))
+
+                                    // 🧾 ORDERS
+                                    IconButton(
+                                        onClick = {
+                                            navController.navigate("local_orders") {
+                                                launchSingleTop = true
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .size(commonHeight)
+                                            .background(
+                                                if (currentRoute == "local_orders")
+                                                    MaterialTheme.colorScheme.primary
+                                                else
+                                                    MaterialTheme.colorScheme.surfaceVariant,
+                                                shape = commonShape
+                                            )
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.ReceiptLong,
+                                            contentDescription = "Orders",
+                                            tint = if (currentRoute == "local_orders")
+                                                MaterialTheme.colorScheme.onPrimary
+                                            else
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+
+                                    Spacer(Modifier.width(8.dp))
+
+                                    StopSoundButton(viewModel = realtimeOrdersVM)
                                 }
 
-                                Spacer(Modifier.width(6.dp))
+                                // ✅ WAITER DEVICE UI
+                                if (role == PosRole.WAITER) {
 
-                                // 🖥 POS
-                                IconButton(
-                                    onClick = {
-                                        navController.navigate("pos") {
-                                            launchSingleTop = true
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .size(commonHeight)
-                                        .background(
-                                            if (currentRoute == "pos")
-                                                MaterialTheme.colorScheme.primary
-                                            else
-                                                MaterialTheme.colorScheme.surfaceVariant,
-                                            shape = commonShape
+                                    // 🍽 WAITER POS
+                                    IconButton(
+                                        onClick = {
+                                            navController.navigate("posWaiter") {
+                                                launchSingleTop = true
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .size(commonHeight)
+                                            .background(
+                                                if (currentRoute == "posWaiter")
+                                                    MaterialTheme.colorScheme.primary
+                                                else
+                                                    MaterialTheme.colorScheme.surfaceVariant,
+                                                shape = commonShape
+                                            )
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.PointOfSale,
+                                            contentDescription = "Waiter POS"
                                         )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.PointOfSale,
-                                        contentDescription = "POS",
-                                        tint = if (currentRoute == "pos")
-                                            MaterialTheme.colorScheme.onPrimary
-                                        else
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    }
+
+                                    Spacer(Modifier.width(6.dp))
+
+                                    // 🧾 ORDERS
+                                    IconButton(
+                                        onClick = {
+                                            navController.navigate("local_orders") {
+                                                launchSingleTop = true
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .size(commonHeight)
+                                            .background(
+                                                if (currentRoute == "local_orders")
+                                                    MaterialTheme.colorScheme.primary
+                                                else
+                                                    MaterialTheme.colorScheme.surfaceVariant,
+                                                shape = commonShape
+                                            )
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.ReceiptLong,
+                                            contentDescription = "Orders"
+                                        )
+                                    }
                                 }
 
-                                Spacer(Modifier.width(6.dp))
 
-                                // 🧾 ORDERS
-                                IconButton(
-                                    onClick = {
-                                        navController.navigate("local_orders") {
-                                            launchSingleTop = true
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .size(commonHeight)
-                                        .background(
-                                            if (currentRoute == "local_orders")
-                                                MaterialTheme.colorScheme.primary
-                                            else
-                                                MaterialTheme.colorScheme.surfaceVariant,
-                                            shape = commonShape
-                                        )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ReceiptLong,
-                                        contentDescription = "Orders",
-                                        tint = if (currentRoute == "local_orders")
-                                            MaterialTheme.colorScheme.onPrimary
-                                        else
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
 
-                                Spacer(Modifier.width(8.dp))
 
-                                StopSoundButton(viewModel = realtimeOrdersVM)
                             }
+
 
                         )
                     }

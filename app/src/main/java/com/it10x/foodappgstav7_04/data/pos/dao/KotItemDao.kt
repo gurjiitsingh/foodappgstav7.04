@@ -151,11 +151,21 @@ AND status = 'PENDING'
     SELECT * FROM pos_kot_items
     WHERE tableNo = :tableNo
       AND status = 'PENDING'
-      AND print = 0
+      AND kitchenPrinted = 0
     ORDER BY createdAt ASC
 """)
     suspend fun getUnprintedPendingItems(tableNo: String): List<PosKotItemEntity>
 
+
+    @Query("""
+    SELECT * FROM pos_kot_items
+    WHERE tableNo = :tableNo
+      AND status = 'PENDING'
+      AND kitchenPrintReq = 1
+      AND kitchenPrinted = 0
+    ORDER BY createdAt ASC
+""")
+    suspend fun getItemsToPrintForKitchen(tableNo: String): List<PosKotItemEntity>
     @Query("""
     SELECT * FROM pos_kot_items
     WHERE tableNo = :tableNo
@@ -166,22 +176,22 @@ AND status = 'PENDING'
 
     @Query("""
     UPDATE pos_kot_items
-    SET print = 1
+    SET kitchenPrinted = 1
     WHERE tableNo = :tableNo
-      AND print = 0
+      AND kitchenPrinted = 0
 """)
     suspend fun markAllPrintedForTable(tableNo: String)
 
     @Query("""
     UPDATE pos_kot_items
-    SET print = 1
+    SET kitchenPrinted = 1
     WHERE id = :itemId
 """)
     suspend fun markPrinted(itemId: String)
 
     @Query("""
     UPDATE pos_kot_items
-    SET print = 1
+    SET kitchenPrinted = 1
     WHERE id IN (:itemIds)
 """)
     suspend fun markPrintedBatch(itemIds: List<String>)
@@ -196,16 +206,16 @@ AND status = 'PENDING'
 
     @Query("""
     UPDATE pos_kot_items
-    SET print = 1
+    SET kitchenPrinted = 1
     WHERE tableNo = :tableNo
-      AND print = 0
+      AND kitchenPrinted = 0
 """)
     suspend fun markAllPrinted(tableNo: String)
 
     @Query("""
     SELECT * FROM pos_kot_items
     WHERE tableNo = :tableNo
-      AND print = 0
+      AND kitchenPrinted = 0
     ORDER BY createdAt ASC
 """)
     suspend fun getUnprintedItems(tableNo: String): List<PosKotItemEntity>

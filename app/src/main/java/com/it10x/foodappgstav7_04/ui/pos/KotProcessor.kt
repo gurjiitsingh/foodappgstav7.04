@@ -52,7 +52,8 @@ class KotProcessor(
                         sessionId = sessionId,
                         tableNo = tableNo,
                         quantity = totalQty,
-                        print = item.print,
+                        kitchenPrintReq = item.kitchenPrintReq,
+                        kitchenPrinted = item.kitchenPrinted,
                         status = "PENDING",
                         createdAt = System.currentTimeMillis()
                     )
@@ -62,7 +63,7 @@ class KotProcessor(
         }
 
         // 2️⃣ Fetch Unprinted Items
-        val unprintedItems = kotItemDao.getUnprintedItems(tableNo)
+        val unprintedItems = kotItemDao.getItemsToPrintForKitchen(tableNo)
 
         Log.d("WAITER_KOT", "------------------------------")
         Log.d("WAITER_KOT", "Unprinted Items Count: ${unprintedItems.size}")
@@ -70,7 +71,7 @@ class KotProcessor(
         unprintedItems.forEach {
             Log.d(
                 "WAITER_KOT_PRINT",
-                "PRINT -> ${it.name} | Qty=${it.quantity} | Printed=${it.print}"
+                "PRINT -> ${it.name} | Qty=${it.quantity} | Printed=${it.kitchenPrintReq}"
             )
         }
 
