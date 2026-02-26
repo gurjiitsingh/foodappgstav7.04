@@ -150,7 +150,7 @@ fun KitchenScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.SoupKitchen,
-                        contentDescription = "Send all to Kitchen & Bill",
+                        contentDescription = "Send to Kitchen & Bill",
                         tint = Color.White
                     )
                     Spacer(Modifier.width(6.dp))

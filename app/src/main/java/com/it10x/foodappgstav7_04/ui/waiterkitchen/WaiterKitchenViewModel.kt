@@ -512,7 +512,7 @@ class WaiterKitchenViewModel(
                 Log.d("KITCHEN_PRINT", "Done All printed for table=$tableNo")
             }
 
-            Log.d("KOT", "✅ KOT SAVED: batch=$batchId items=${cartItems.size}")
+
             true
 
         } catch (e: Exception) {

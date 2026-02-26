@@ -250,7 +250,8 @@ class PrinterManager(
         items: List<PosKotItemEntity>,
         onResult: (Boolean) -> Unit = {}
     ) {
-        Log.e("PRINT", "printer configured for role=$role")
+        Log.e("KOT", "STEP 1 → Role=$role")
+        Log.e("KOT", "STEP 2 → Items size=${items.size}")
         val config = prefs.getPrinterConfig(role)
         if (config == null) {
             Log.e("PRINT", "No printer configured for role=$role")
@@ -262,6 +263,11 @@ class PrinterManager(
             sessionKey ,
             orderType,
             items
+        )
+
+        Log.e(
+            "KOT",
+            "\n================= KITCHEN RECEIPT =================\n$text\n=================================================="
         )
 
         //Log.d("PRINT", "Printing role=$role type=${config.type}")

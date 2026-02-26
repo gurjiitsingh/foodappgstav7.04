@@ -75,7 +75,7 @@ class GlobalOrderSyncManager(
                                         itemDoc.getString("categoryName") ?: "WAITER"
                                     val kitchenPrintReq =
                                         itemDoc.getBoolean("kitchenPrintReq") ?: true
-                                    Log.d("WAITER_KOT_PRINT", "name: $name | print=$kitchenPrintReq")
+                                    Log.d("KOT", "FS New: name-> $name | quantity=${quantity} kitchenPrintReq=$kitchenPrintReq")
                                     PosKotItemEntity(
                                         id = "${productId}_$tableNo",
                                         sessionId = sessionId,

@@ -316,7 +316,7 @@ class KitchenViewModel(
         deviceName: String?,
         appVersion: String?
     ) {
-        Log.d("KITCHEN_DEBUG4", "sendToKitchen tableNo=$tableNo orderType=$orderType sessionId=$sessionId ")
+       // Log.d("KITCHEN_PRINT", "sendToKitchen tableNo=$tableNo ")
         //   logAllKotItems()
         viewModelScope.launch {
             _loading.value = true
@@ -626,7 +626,7 @@ class KitchenViewModel(
             }
 
             kotRepository.insertItemsAndSync(tableNo, items)
-            Log.d("WAITER_KOT", "WAITER_KOT ------------------------------")
+            Log.d("KOT", "WAITER_KOT ------------------------------")
 
 //            val allItems = kotItemDao.getAllItems(tableNo)
 //            allItems.forEach {
@@ -642,10 +642,10 @@ class KitchenViewModel(
             val unprintedItems = kotItemDao.getUnprintedItems(tableNo)
 
             if (unprintedItems.isNotEmpty()) {
-                Log.d("WAITER_KOT", "Unprinted Items Count: ${unprintedItems.size}")
+                Log.d("KOT", "Unprinted Items Count: ${unprintedItems.size}")
                 unprintedItems.forEach {
                     Log.d(
-                        "WAITER_KOT",
+                        "KOT",
                         "PRINT -> ${it.name} | Qty=${it.quantity} | kitchenPrintReq=${it.kitchenPrintReq} kitchenPrinted=${it.kitchenPrinted}"
                     )
                 }
@@ -663,7 +663,7 @@ class KitchenViewModel(
                 Log.d("KITCHEN_PRINT", "Done All printed for table=$tableNo")
             }
 
-            Log.d("KOT", "✅ KOT SAVED: batch=$batchId items=${cartItems.size}")
+           // Log.d("KOT", "✅ KOT SAVED: batch=$batchId items=${cartItems.size}")
             true
 
         } catch (e: Exception) {

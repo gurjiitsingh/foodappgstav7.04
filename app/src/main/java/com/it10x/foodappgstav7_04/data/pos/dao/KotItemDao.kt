@@ -52,6 +52,11 @@ interface KotItemDao {
     """)
     suspend fun clearForTable(tableNo: String)
 
+    @Query("""
+        DELETE FROM pos_kot_items       
+    """)
+    suspend fun clearForTableAll()
+
 
     @Query("""
     UPDATE pos_kot_items
@@ -160,14 +165,19 @@ AND status = 'PENDING'
     @Query("""
     SELECT * FROM pos_kot_items
     WHERE tableNo = :tableNo
-      
+      AND status = 'PENDING'
       AND kitchenPrintReq = 1
       AND kitchenPrinted = 0
     ORDER BY createdAt ASC
 """)
     suspend fun getItemsToPrintForKitchen(tableNo: String): List<PosKotItemEntity>
 
-
+    @Query("""
+    SELECT * FROM pos_kot_items
+    WHERE tableNo = :tableNo
+    ORDER BY createdAt ASC
+""")
+    suspend fun getItemsAll(tableNo: String): List<PosKotItemEntity>
 
     @Query("""
     UPDATE pos_kot_items
