@@ -223,50 +223,50 @@ fun WaiterRightPanel(
 // =================== POS ACTION BUTTONS ==================
 // =========================================================
 
-       // OrderSummaryScreen(cartViewModel)
 
-     //   Divider()
-//        Spacer(Modifier.width(8.dp))
-//
-//        Row(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(vertical = 6.dp),
-//            horizontalArrangement = Arrangement.SpaceBetween,
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            // 💰 Summary (item count + grand total)
-//            OrderSummaryCompact(cartViewModel)
-//
-//            // 🧾 Bill Button
-//            Button(
-//                modifier = Modifier
-//                    .size(56.dp)
-//                    .padding(4.dp),
-//                enabled = canOpenBill,
-//                onClick = {
-//                    if (!canOpenBill) return@Button
-//                    tableNo?.let { onOpenBill(it) }
-//                },
-//                contentPadding = PaddingValues(0.dp),
-//                colors = ButtonDefaults.buttonColors(
-//                    containerColor = if (canOpenBill) Color(0xFF66BB6A) else Color(0xFFBDBDBD),
-//                    contentColor = Color.White,
-//                    disabledContainerColor = Color(0xFFBDBDBD),
-//                    disabledContentColor = Color.White
-//                ),
-//                shape = RoundedCornerShape(10.dp)
-//            ) {
-//                Icon(
-//                    Icons.Default.Receipt,
-//                    contentDescription = "Bill",
-//                    tint = Color.White,
-//                    modifier = Modifier.size(18.dp)
-//                )
-//            }
-//        }
-//
-//        Spacer(Modifier.width(8.dp))
+
+        Divider()
+        Spacer(Modifier.width(8.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 💰 Summary (item count + grand total)
+            OrderSummaryCompact(cartViewModel)
+
+            // 🧾 Bill Button
+            Button(
+                modifier = Modifier
+                    .size(56.dp)
+                    .padding(4.dp),
+                enabled = canOpenBill,
+                onClick = {
+                    if (!canOpenBill) return@Button
+                    tableNo?.let { onOpenBill(it) }
+                },
+                contentPadding = PaddingValues(0.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (canOpenBill) Color(0xFF66BB6A) else Color(0xFFBDBDBD),
+                    contentColor = Color.White,
+                    disabledContainerColor = Color(0xFFBDBDBD),
+                    disabledContentColor = Color.White
+                ),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(
+                    Icons.Default.Receipt,
+                    contentDescription = "Bill",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.width(8.dp))
 
         // ---------- CART ----------
         LazyColumn(

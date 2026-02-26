@@ -18,7 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.it10x.foodappgstav7_04.data.pos.AppDatabaseProvider
 import com.it10x.foodappgstav7_04.ui.cart.CartViewModel
 import com.it10x.foodappgstav7_04.data.pos.viewmodel.POSOrdersViewModel
-
+import com.it10x.foodappgstav7_04.ui.bill.BillViewModel
+import com.it10x.foodappgstav7_04.ui.bill.BillViewModelFactory
 
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -33,10 +34,12 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.SoupKitchen
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -49,6 +52,8 @@ import com.it10x.foodappgstav7_04.ui.cart.CartUiEvent
 
 import androidx.compose.ui.graphics.Shape
 import com.google.firebase.firestore.FirebaseFirestore
+import com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.Waiterbill.WaiterBillDialog
+import com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.Waiterbill.WaiterBillDialogPhone
 import com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.tables.FloatingCartButton
 import com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.tables.OrderChip
 import com.it10x.foodappgstav7_04.com.it10x.foodappgstav7_04.ui.tables.PosOrderTypeButton
@@ -80,8 +85,8 @@ fun WaiterPosScreen(
     posSessionViewModel: PosSessionViewModel,
     posTableViewModel: PosTableViewModel,
 ) {
-
-
+    val context = LocalContext.current
+    val application = context.applicationContext as Application
     // --- COMMON STYLING ---
     val commonShape = RoundedCornerShape(8.dp)
     val commonHeight = 52.dp
@@ -92,7 +97,7 @@ fun WaiterPosScreen(
 
     var showSearchKeyboard by rememberSaveable { mutableStateOf(false) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    val context = LocalContext.current
+
     val db = AppDatabaseProvider.get(context)
 
     val configuration = LocalConfiguration.current
@@ -129,13 +134,41 @@ fun WaiterPosScreen(
             tableDao = db.tableDao()
         )
     }
+    val orderRef = if (orderType == "DINE_IN") tableId ?: "" else orderType
+// ---------------- BILL ITEMS ----------------
+    val billViewModel: BillViewModel = viewModel(
+        key = "BillVM_${tableId ?: orderType}",
+        factory = BillViewModelFactory(
+            application = application,
+            tableId = tableId ?: orderType,
+            tableName = tableId,
+            orderType = orderType,
+
+            )
+    )
+
+
+// ✅ Bill button depends ONLY on bill items
+    val BillItems by billViewModel
+        .getDoneItems(orderRef = orderRef, orderType = orderType)
+        .collectAsState(initial = emptyList())
+    val canOpenBill = BillItems.isNotEmpty()
+
+    val hasBillItems = BillItems?.isNotEmpty() == true
+//    val canOpenBill =
+//        hasBillItems && when (orderType) {
+//            "DINE_IN" -> true
+//            "TAKEAWAY", "DELIVERY" -> true
+//            else -> false
+//        }
+
 
 
     val waiterKitchenRepository = remember {
         WaiterKitchenRepository(FirebaseFirestore.getInstance())
     }
 
-
+    //val billItemCount = billItems.size
 
     LaunchedEffect(Unit) {
         cartViewModel.uiEvent.collect { event ->
@@ -192,6 +225,7 @@ fun WaiterPosScreen(
     var showKitchen by remember { mutableStateOf(false) }
     var showBill by remember { mutableStateOf(false) }
     var showCategorySelector by remember { mutableStateOf(false) }
+
 
     LaunchedEffect(orderType, tableId) {
         if (orderType == "DINE_IN" && !tableId.isNullOrBlank()) {
@@ -286,6 +320,39 @@ fun WaiterPosScreen(
                                 imageVector = Icons.Default.Category,
                                 contentDescription = "Category",
                                 tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+
+
+                        // 🧾 Bill Button
+                        // ---------------- BILL ITEMS ----------------
+
+
+                        Button(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .padding(4.dp),
+                            enabled = canOpenBill,
+                            onClick = {
+                                if (!canOpenBill) return@Button
+                                showBill = true
+                            },
+                            contentPadding = PaddingValues(0.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor =
+                                    if (canOpenBill) Color(0xFF66BB6A) // 🟢 Green when bill exists
+                                    else Color(0xFFBDBDBD),            // ⚪ Grey when no bill
+                                contentColor = Color.White,
+                                disabledContainerColor = Color(0xFFBDBDBD),
+                                disabledContentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Receipt,
+                                contentDescription = "Bill",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
 
@@ -852,7 +919,7 @@ fun WaiterPosScreen(
     //  val billingKey by cartViewModel.sessionKey.collectAsState()
 
     if (LocalConfiguration.current.screenWidthDp > 600)
-        BillDialog(
+        WaiterBillDialog(
             showBill = showBill,
             onDismiss = { showBill = false },
             sessionId = sessionId,
@@ -861,7 +928,7 @@ fun WaiterPosScreen(
             selectedTableName = selectedTableName ?: ""
         )
     else{
-        BillDialogPhone(
+        WaiterBillDialogPhone(
             showBill = showBill,
             onDismiss = { showBill = false },
             sessionId = sessionId,

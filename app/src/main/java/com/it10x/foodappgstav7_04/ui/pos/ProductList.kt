@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -84,7 +85,7 @@ private fun ParentProductCard(
         .sumOf { it.quantity }
 
     val productBg = MaterialTheme.colorScheme.background//MaterialTheme.colorScheme.surface
-    val productText = MaterialTheme.colorScheme.onSurface
+    val productText = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
 
     val addBg = PosTheme.accent.cartAddBg
     val addText = PosTheme.accent.cartAddText
@@ -165,20 +166,24 @@ private fun ParentProductCard(
                         contentAlignment = Alignment.Center
                     ) {
                         if (currentQty > 0) {
-                            OutlinedButton(
+                            IconButton(
                                 onClick = { cartViewModel.decrease(product.id, tableNo) },
-                                border = BorderStroke(1.5.dp, removeBorder),
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(0.dp),
-                                shape = RectangleShape
+                                modifier = Modifier
+                                    .size(width = 38.dp, height = 30.dp)
+                                    .background(
+                                        color = Color(0xFF64748B), // darker slate (not white)
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
                             ) {
                                 Text(
                                     "−",
-                                    color = removeText,
+                                    color = Color(0xFF1E293B), // dark slate text
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
+
+
                         }
                     }
 
@@ -238,7 +243,7 @@ private fun ParentProductCard(
                         tableViewModel.markOrdering(tableNo)
                     },
                     modifier = Modifier
-                        .size(width = 40.dp, height = 32.dp)
+                        .size(width = 38.dp, height = 30.dp)
                         .background(
                             color = addBg.copy(alpha = 0.85f),
                             shape = RoundedCornerShape(8.dp) // 👈 perfect POS feel

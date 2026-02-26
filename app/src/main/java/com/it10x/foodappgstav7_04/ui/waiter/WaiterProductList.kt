@@ -107,7 +107,7 @@ private fun ParentProductCard(
 
         Row(
             modifier = Modifier
-                .padding(horizontal = 3.dp, vertical = 4.dp)
+                .padding(horizontal = 5.dp, vertical = 4.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -127,8 +127,8 @@ private fun ParentProductCard(
             // 🔻 Minus Button (turns red if qty > 0)
             Button(
                 onClick = { cartViewModel.decrease(product.id, tableNo) },
-                modifier = Modifier.size(34.dp),
-                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier.size(38.dp),
+                contentPadding = PaddingValues(1.dp),
                 shape = RoundedCornerShape(6.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor =
@@ -171,29 +171,51 @@ private fun ParentProductCard(
             Spacer(modifier = Modifier.width(6.dp))
 
             // ➕ Add Button
+//            Button(
+//                onClick = {
+//                    cartViewModel.addProductToCart(
+//                        product = product,
+//                        price = price
+//                    )
+//                    onProductAdded()
+//                    tableViewModel.markOrdering(tableNo)
+//                },
+//                modifier = Modifier.size(width = 40.dp, height = 34.dp),
+//                shape = RoundedCornerShape(6.dp),   // small POS rounded
+//                contentPadding = PaddingValues(0.dp),
+//                colors = ButtonDefaults.buttonColors(
+//                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f),
+//                    contentColor = Color.White
+//                ),
+//                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+//            ) {
+//                Text(
+//                    "+",
+//                    fontSize = 18.sp,
+//                    fontWeight = FontWeight.Bold
+//                )
+//            }
+
+
             Button(
-                onClick = {
-                    cartViewModel.addProductToCart(
-                        product = product,
-                        price = price
-                    )
+                onClick = {  cartViewModel.addProductToCart(
+                    product = product,
+                    price = price
+                )
                     onProductAdded()
-                    tableViewModel.markOrdering(tableNo)
-                },
-                modifier = Modifier.size(width = 40.dp, height = 34.dp),
-                shape = RoundedCornerShape(6.dp),   // small POS rounded
-                contentPadding = PaddingValues(0.dp),
+                    tableViewModel.markOrdering(tableNo) },
+                modifier = Modifier.size(38.dp),
+                contentPadding = PaddingValues(1.dp),
+                shape = RoundedCornerShape(6.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f),
+                    containerColor =
+                        if (currentQty > 0) Color(0xFFD32F2F)
+                        else Color(0xFFBDBDBD),
                     contentColor = Color.White
                 ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                elevation = ButtonDefaults.buttonElevation(0.dp)
             ) {
-                Text(
-                    "+",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("+", fontSize = 18.sp)
             }
 
         }

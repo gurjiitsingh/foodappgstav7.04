@@ -28,8 +28,18 @@ class KotRepository(
         tableNo: String,
         items: List<PosKotItemEntity>
     ) {
+//        Log.d("KITCHEN_T", "insertItemsAndSync called for table: $tableNo")
+//        Log.d("KITCHEN_T", "Items count: ${items.size}")
+//
+//        items.forEach {
+//            Log.d("KITCHEN_T", "Item -> productId: ${it.productId}, qty: ${it.quantity}")
+//        }
+
         kotItemDao.insertAll(items)
+      //  Log.d("KITCHEN_T", "Items inserted into database")
+
         syncKitchenCount(tableNo)
+      //  Log.d("KITCHEN_T", "Kitchen count synced for table: $tableNo")
     }
 
 
