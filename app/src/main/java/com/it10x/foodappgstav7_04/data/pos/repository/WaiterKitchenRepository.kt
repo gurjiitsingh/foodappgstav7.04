@@ -51,7 +51,7 @@ class WaiterKitchenRepository(
                 deviceId = deviceId,
                 deviceName = deviceName,
                 status = "PENDING",
-                createdAt = System.currentTimeMillis()
+                createdAt = System.currentTimeMillis(),
             )
 
             batch.set(orderRef, order)

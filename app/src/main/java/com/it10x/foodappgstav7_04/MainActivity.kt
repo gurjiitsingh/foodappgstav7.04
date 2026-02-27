@@ -83,6 +83,7 @@ import com.google.firebase.FirebaseOptions
 import com.it10x.foodappgstav7_03.core.PosRole
 import com.it10x.foodappgstav7_03.core.PosRoleManager
 import com.it10x.foodappgstav7_03.ui.setting.DeviceRoleSelectionScreen
+import com.it10x.foodappgstav7_04.data.pos.dao.ProcessedCloudOrderDao
 import com.it10x.foodappgstav7_04.firebase.ClientRegistry
 
 class MainActivity : ComponentActivity() {
@@ -93,6 +94,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val role = PosRoleManager.getRole(this)
         val db1 = AppDatabaseProvider.get(this)
+        val processedDao = db1.processedCloudOrderDao()
         val kotRepository = KotRepository(
             batchDao = db1.kotBatchDao(),
             kotItemDao = db1.kotItemDao(),
@@ -167,41 +169,10 @@ class MainActivity : ComponentActivity() {
 
                 globalOrderSyncManager = GlobalOrderSyncManager(
                     firestore = firestore,
-                    kotProcessor = kotProcessor,
-                    onWaiterOrderReceived = { orderId, tableNo, sessionId, items ->
-                        // Convert each PosKotItemEntity → PosCartEntity
-                        val cartItems: List<PosCartEntity> = items.map { kotItem ->
-                            PosCartEntity(
-                                productId = kotItem.productId,
-                                name = kotItem.name,
-                                categoryId = kotItem.categoryId,
-                                categoryName = kotItem.categoryName,
-                                kitchenPrintReq = kotItem.kitchenPrintReq,
-                                parentId = kotItem.parentId,
-                                isVariant = kotItem.isVariant,
-                                basePrice = kotItem.basePrice,
-                                quantity = kotItem.quantity,
-                                taxRate = kotItem.taxRate,
-                                taxType = kotItem.taxType,
-                                sessionId = sessionId,          // 🔑 required
-                                tableId = tableNo,              // 🔑 required for DINE_IN
-                                note = kotItem.note,
-                                modifiersJson = kotItem.modifiersJson,
-                                sentToKitchen = true,           // mark as sent
-                                createdAt = kotItem.createdAt   // preserve original timestamp
-                            )
-                        }
 
+                    processedDao,
+                    kitchenViewModel = kitchenVM,
 
-                        kitchenVM.waiterOrderToKitchen(
-                            orderType = "DINE_IN",
-                            tableNo = tableNo,
-                            sessionId = sessionId,
-                            items = cartItems, // ✅ now correct type
-                            deviceId = "WAITER",
-                            deviceName = "WAITER_DEVICE"
-                        )
-                    }
                 )
                 if (role == PosRole.MAIN) {
                     LaunchedEffect(Unit) {

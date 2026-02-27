@@ -250,6 +250,7 @@ class PrinterManager(
         items: List<PosKotItemEntity>,
         onResult: (Boolean) -> Unit = {}
     ) {
+        Log.d("SYNC_DEBUG", "PRINT CALLED")
         Log.e("KOT", "STEP 1 → Role=$role")
         Log.e("KOT", "STEP 2 → Items size=${items.size}")
         val config = prefs.getPrinterConfig(role)

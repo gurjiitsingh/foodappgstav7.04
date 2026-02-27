@@ -307,7 +307,7 @@ class KitchenViewModel(
     }
 
 
-    fun cartToBIll_KitchenPrint(
+    fun cartToKotMainPOS(
         orderType: String,
         tableNo: String,
         sessionId: String,
@@ -343,7 +343,7 @@ class KitchenViewModel(
 
                 //  Log.d("KITCHEN_DEBUG4", "Creating new KOT batchId=$orderId for $orderType")
 
-                val kotSaved = saveKotOnlyToKotItem_withPrint(
+                val kotSaved = saveKotAndPrintKitchen(
                     orderType = orderType,
                     sessionId = sessionId,
                     tableNo = tableNo,
@@ -370,41 +370,6 @@ class KitchenViewModel(
     }
 
 
-    fun waiterOrderToKitchen(
-        orderType: String,
-        tableNo: String,
-        sessionId: String,
-        items: List<PosCartEntity>,
-        deviceId: String,
-        deviceName: String?
-    ) {
-        viewModelScope.launch {
-            _loading.value = true
-
-            try {
-
-                val kotSaved = saveKotOnlyToKotItem_withPrint(
-                    orderType = orderType,
-                    sessionId = sessionId,
-                    tableNo = tableNo,
-                    cartItems = items,
-                    deviceId = deviceId,
-                    deviceName = deviceName,
-                    appVersion = "WAITER_SYNC"
-                )
-
-                if (!kotSaved) {
-                    Log.e("WAITER_FLOW", "Failed to save KOT")
-                    return@launch
-                }
-
-            } catch (e: Exception) {
-                Log.e("WAITER_FLOW", "Error", e)
-            } finally {
-                _loading.value = false
-            }
-        }
-    }
 
 
     private suspend fun saveKotOnlyToKotItem(
@@ -561,9 +526,55 @@ class KitchenViewModel(
         }
     }
 
+    suspend fun createKotAndPrintFirestore(
+        orderType: String,
+        sessionId: String,
+        tableNo: String,
+        cartItems: List<PosCartEntity>,
+        deviceId: String,
+        deviceName: String?,
+        appVersion: String?
+    ) {
+        Log.d("KOT_TRACE", "Called from: ${Throwable().stackTrace[1]}")
+
+        if (cartItems.isEmpty()) {
+            Log.w("KOT_BRIDGE", "⚠️ createKotAndPrint called with empty cartItems")
+            return
+        }
+
+        _loading.value = true
+
+        try {
+            val saved = saveKotAndPrintKitchen(
+                orderType = orderType,
+                sessionId = sessionId,
+                tableNo = tableNo,
+                cartItems = cartItems,
+                deviceId = deviceId,
+                deviceName = deviceName,
+                appVersion = appVersion
+            )
+
+            if (!saved) {
+                Log.e("KOT_BRIDGE", "❌ Failed to create KOT + Print")
+                return
+            }
+
+            Log.d(
+                "KOT_BRIDGE",
+                "✅ KOT Created & Printed | table=$tableNo | items=${cartItems.size}"
+            )
+
+        } catch (e: Exception) {
+            Log.e("KOT_BRIDGE", "❌ Exception in createKotAndPrint()", e)
+        } finally {
+            _loading.value = false
+        }
+    }
 
 
-    private suspend fun saveKotOnlyToKotItem_withPrint(
+
+    private suspend fun saveKotAndPrintKitchen(
         orderType: String,
         sessionId: String,
         tableNo: String?,
@@ -572,7 +583,7 @@ class KitchenViewModel(
         deviceName: String?,
         appVersion: String?
     ): Boolean = withContext(Dispatchers.IO) {
-
+        Log.d("KOT", "saveKotAndPrintKitchen Called from: ${Throwable().stackTrace[1]}")
         val tableNo = tableNo?: "";
         try {
             val db = AppDatabaseProvider.get(printerManager.appContext())
@@ -582,7 +593,7 @@ class KitchenViewModel(
             val batchId = UUID.randomUUID().toString()
             val now = System.currentTimeMillis()
 
-            repository.markAllSent(tableNo)
+        //    repository.markAllSent(tableNo)
 
             val batch = PosKotBatchEntity(
                 id = batchId,
@@ -602,7 +613,7 @@ class KitchenViewModel(
 
             val items = cartItems.map { cart ->
                 PosKotItemEntity(
-                    id = "${cart.productId}_$tableNo",
+                    id = UUID.randomUUID().toString(),
                     sessionId = sessionId,
                     kotBatchId = batchId,
                     tableNo = tableNo,
@@ -626,44 +637,28 @@ class KitchenViewModel(
             }
 
             kotRepository.insertItemsAndSync(tableNo, items)
-            Log.d("KOT", "WAITER_KOT ------------------------------")
-
-//            val allItems = kotItemDao.getAllItems(tableNo)
-//            allItems.forEach {
-//                Log.d(
-//                    "WAITER_KOT",
-//                    "PRINT -> ${it} - ${it.name} | Qty=${it.quantity} | Printed=${it.kitchenPrintReq}"
-//                )
-//            }
-
 
 
             // 🔥 PRINT (still inside same coroutine)
-            val unprintedItems = kotItemDao.getUnprintedItems(tableNo)
+            // 3️⃣ Print unprinted
+            val batchItems = kotItemDao.getItemsByBatchId(batchId)
 
-            if (unprintedItems.isNotEmpty()) {
-                Log.d("KOT", "Unprinted Items Count: ${unprintedItems.size}")
-                unprintedItems.forEach {
-                    Log.d(
-                        "KOT",
-                        "PRINT -> ${it.name} | Qty=${it.quantity} | kitchenPrintReq=${it.kitchenPrintReq} kitchenPrinted=${it.kitchenPrinted}"
-                    )
-                }
+            if (batchItems.isNotEmpty()) {
+                Log.d("KOT", "Batch is called")
                 printerManager.printTextKitchen(
                     PrinterRole.KITCHEN,
                     sessionKey = tableNo,
                     orderType = orderType,
-                    items = unprintedItems
+                    items = batchItems
                 )
 
+                kotItemDao.markBatchKitchenPrintedBatch(batchId)
                 kotRepository.markDoneAll(tableNo)
                 kotRepository.syncKinchenCount(tableNo)
                 kotRepository.syncBillCount(tableNo)
-
-                Log.d("KITCHEN_PRINT", "Done All printed for table=$tableNo")
             }
 
-           // Log.d("KOT", "✅ KOT SAVED: batch=$batchId items=${cartItems.size}")
+
             true
 
         } catch (e: Exception) {
@@ -766,21 +761,7 @@ class KitchenViewModel(
         }
     }
 
-//    fun debugPendingItems(tableNo: String) {
-//        viewModelScope.launch {
-//            kotItemDao.getPendingItems(tableNo).collect { items ->
-//
-//                Log.d("KITCHEN_DEBUG", "Pending items count = ${items.size}")
-//
-//                items.forEach { item ->
-//                    Log.d(
-//                        "KITCHEN_DEBUG",
-//                        "Item -> name=${item.name}, qty=${item.quantity}, status=${item.status}, table=${item.tableNo}"
-//                    )
-//                }
-//            }
-//        }
-//    }
+
 
     private fun addItemToDebouncedKitchenPrint(
         item: PosKotItemEntity,
@@ -841,3 +822,27 @@ class KitchenViewModel(
 
 
 
+//            val allItems = kotItemDao.getAllItems(tableNo)
+//            allItems.forEach {
+//                Log.d(
+//                    "WAITER_KOT",
+//                    "PRINT -> ${it} - ${it.name} | Qty=${it.quantity} | Printed=${it.kitchenPrintReq}"
+//                )
+//            }
+
+
+//    fun debugPendingItems(tableNo: String) {
+//        viewModelScope.launch {
+//            kotItemDao.getPendingItems(tableNo).collect { items ->
+//
+//                Log.d("KITCHEN_DEBUG", "Pending items count = ${items.size}")
+//
+//                items.forEach { item ->
+//                    Log.d(
+//                        "KITCHEN_DEBUG",
+//                        "Item -> name=${item.name}, qty=${item.quantity}, status=${item.status}, table=${item.tableNo}"
+//                    )
+//                }
+//            }
+//        }
+//    }

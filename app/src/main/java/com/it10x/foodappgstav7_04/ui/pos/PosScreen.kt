@@ -485,7 +485,7 @@ fun PosScreen(
                             onClick = {
                                 orderType = "TAKEAWAY"
                                 posSessionViewModel.clearTable()
-                                showTableSelector = false
+                                showTableSelector = true
                             },
                             modifier = Modifier
                                 .size(commonHeight)
@@ -800,9 +800,6 @@ fun PosScreen(
                 }
             }
         }
-
-
-
 
 
         // ---------- MOBILE CART FAB ----------

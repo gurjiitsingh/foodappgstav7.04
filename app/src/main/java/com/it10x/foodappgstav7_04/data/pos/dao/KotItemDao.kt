@@ -4,11 +4,79 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.it10x.foodappgstav7_04.data.pos.entities.PosKotBatchEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosKotItemEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface KotItemDao {
+
+
+
+    @Dao
+    interface KotItemDao {
+
+        @Insert(onConflict = OnConflictStrategy.ABORT)
+        suspend fun insertAll(items: List<PosKotItemEntity>)
+
+        // 🔥 Printing
+        @Query("""
+        SELECT * FROM pos_kot_items
+        WHERE tableNo = :tableNo
+        AND kitchenPrinted = 0
+        AND status = 'ACTIVE'
+        ORDER BY createdAt ASC
+    """)
+        suspend fun getItemsToPrint(tableNo: String): List<PosKotItemEntity>
+
+        @Query("""
+        UPDATE pos_kot_items
+        SET kitchenPrinted = 1
+        WHERE id IN (:ids)
+    """)
+        suspend fun markPrinted(ids: List<String>)
+
+        // 💳 Billing
+        @Query("""
+        SELECT * FROM pos_kot_items
+        WHERE tableNo = :tableNo
+        AND status = 'ACTIVE'
+    """)
+        suspend fun getBillItems(tableNo: String): List<PosKotItemEntity>
+
+        @Query("""
+        SELECT SUM(quantity) FROM pos_kot_items
+        WHERE tableNo = :tableNo
+        AND productId = :productId
+        AND status = 'ACTIVE'
+    """)
+        suspend fun getTotalQtyForProduct(
+            tableNo: String,
+            productId: String
+        ): Int?
+    }
+
+
+    @Dao
+    interface KotBatchDao {
+
+        @Insert(onConflict = OnConflictStrategy.ABORT)
+        suspend fun insert(batch: PosKotBatchEntity)
+
+        @Query("""
+        SELECT * FROM pos_kot_batch
+        WHERE tableNo = :tableNo
+        ORDER BY createdAt ASC
+    """)
+        suspend fun getBatchesForTable(tableNo: String): List<PosKotBatchEntity>
+
+        @Query("""
+        SELECT * FROM pos_kot_batch
+        WHERE syncStatus != 'DONE'
+    """)
+        suspend fun getUnsyncedBatches(): List<PosKotBatchEntity>
+    }
+
 
 
     // -------------------------
@@ -186,6 +254,7 @@ AND status = 'PENDING'
 """)
     suspend fun markKitchenPrinted(ids: List<String>)
 
+
     @Query("""
     SELECT * FROM pos_kot_items
     WHERE tableNo = :tableNo
@@ -241,7 +310,21 @@ AND status = 'PENDING'
 """)
     suspend fun getUnprintedItems(tableNo: String): List<PosKotItemEntity>
 
+    @Query("""
+    UPDATE pos_kot_items
+    SET kitchenPrinted = 1
+    WHERE kotBatchId = :batchId
+""")
+    suspend fun markBatchKitchenPrintedBatch(batchId: String)
 
+    @Query("""
+    SELECT * FROM pos_kot_items
+    WHERE kotBatchId = :batchId
+    AND kitchenPrintReq = 1
+      AND kitchenPrinted = 0
+    ORDER BY createdAt ASC
+""")
+    suspend fun getItemsByBatchId(batchId: String): List<PosKotItemEntity>
     @Query("""
     SELECT * FROM pos_kot_items
     WHERE tableNo = :tableNo

@@ -137,7 +137,7 @@ fun KitchenScreen(
                             context.contentResolver,
                             Settings.Secure.ANDROID_ID
                         )
-                        kitchenViewModel.cartToBIll_KitchenPrint(
+                        kitchenViewModel.cartToKotMainPOS(
                             orderType = orderType,
                             tableNo = tableNo!!,
                             sessionId = sessionId,

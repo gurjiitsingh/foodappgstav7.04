@@ -5,9 +5,11 @@ package com.it10x.foodappgstav7_04.data.pos
 import android.util.Log
 import com.it10x.foodappgstav7_04.data.PrinterRole
 import com.it10x.foodappgstav7_04.data.pos.dao.KotItemDao
+import com.it10x.foodappgstav7_04.data.pos.entities.PosKotBatchEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosKotItemEntity
 import com.it10x.foodappgstav7_04.data.pos.repository.KotRepository
 import com.it10x.foodappgstav7_04.printer.PrinterManager
+import java.util.UUID
 
 class KotProcessor(
     private val kotItemDao: KotItemDao,
@@ -15,7 +17,6 @@ class KotProcessor(
     private val printerManager: PrinterManager
 ) {
 
-    // ✅ Already suspend — NO scope.launch here
     suspend fun processWaiterOrder(
         tableNo: String,
         sessionId: String,
@@ -23,87 +24,94 @@ class KotProcessor(
         items: List<PosKotItemEntity>
     ) {
 
-//        Log.d("WAITER_KOT", "==============================")
-//        Log.d("WAITER_KOT", "Incoming Waiter Order")
-//        Log.d("WAITER_KOT", "Table: $tableNo | Session: $sessionId")
-//        Log.d("WAITER_KOT", "Items Count: ${items.size}")
-//        Log.d("WAITER_KOT", "==============================")
+        val batchId = UUID.randomUUID().toString()
+        val now = System.currentTimeMillis()
 
-        // 1️⃣ Insert / Update All Items First
-        items.forEach { item ->
+        // 1️⃣ Create batch (same as local)
+        val batch = PosKotBatchEntity(
+            id = batchId,
+            sessionId = sessionId,
+            tableNo = tableNo,
+            orderType = orderType,
+            deviceId = "WAITER_DEVICE",
+            deviceName = "WAITER",
+            appVersion = null,
+            createdAt = now,
+            sentBy = "WAITER",
+            syncStatus = "DONE",
+            lastSyncedAt = null
+        )
 
-            val id = "${item.productId}_${tableNo}"
+       // kotBatchDao.insert(batch)
 
-            val existingQty = kotItemDao.getItemQtyById(id) ?: 0
-            val totalQty = existingQty + item.quantity
+        // 2️⃣ Insert items EXACTLY like local POS
+        val newItems = items.map { cloudItem ->
 
-//            Log.d(
-//                "WAITER_KOT",
-//                "Item: ${item.name} |  kitchenPrintReq=${item.kitchenPrintReq} | kitchenPrinted=${item.kitchenPrinted}"
-//            )
+            PosKotItemEntity(
+                id = UUID.randomUUID().toString(),
+                sessionId = sessionId,
+                kotBatchId = batchId,
+                tableNo = tableNo,
 
-            if (existingQty > 0) {
-                kotItemDao.updateQuantity(id, totalQty)
-               // Log.d("WAITER_KOT", "Updated existing item: $id")
-            } else {
-                kotItemDao.insert(
-                    item.copy(
-                        id = id,
-                        sessionId = sessionId,
-                        tableNo = tableNo,
-                        quantity = totalQty,
-                        kitchenPrintReq = item.kitchenPrintReq,
-                        kitchenPrinted = item.kitchenPrinted,
-                        status = "PENDING",
-                        createdAt = System.currentTimeMillis()
-                    )
-                )
-                //Log.d("WAITER_KOT", "Inserted new item: $id")
-            }
-        }
-      //  kotItemDao.clearForTableAll()
+                productId = cloudItem.productId,
+                name = cloudItem.name,
+                categoryId = cloudItem.categoryId,
+                categoryName = cloudItem.categoryName,
 
-        val allItems = kotItemDao.getItemsAll(tableNo)
-        allItems.forEach {
+                parentId = cloudItem.parentId,
+                isVariant = cloudItem.isVariant,
 
-            Log.d(
-                "KOT",
-                "All tableNo Item-> ${it.name} | Printed=${it.kitchenPrinted}  kReq=${it.kitchenPrintReq} status=${it.status} Qty=${it.quantity} |"
+                basePrice = cloudItem.basePrice,
+                quantity = cloudItem.quantity,
+
+                taxRate = cloudItem.taxRate,
+                taxType = cloudItem.taxType,
+
+                note = cloudItem.note,
+                modifiersJson = cloudItem.modifiersJson,
+
+                kitchenPrintReq = cloudItem.kitchenPrintReq,          // force true
+                kitchenPrinted = false,          // always false for new
+
+                status = "ACTIVE",               // never DONE
+                createdAt = now,
+
+                source = "WAITER",               // IMPORTANT
+                syncedToCloud = false,
+                syncedFromCloud = true
             )
         }
 
-        // 2️⃣ Fetch Unprinted Items
-        val unprintedItems = kotItemDao.getItemsToPrintForKitchen(tableNo)
 
+        kotItemDao.insertAll(newItems)
 
-       // Log.d("WAITER_KOT1", "Unprinted Items Count: ${unprintedItems.size}")
+        // 3️⃣ Print unprinted
+        val batchItems = kotItemDao.getItemsByBatchId(batchId)
 
-        unprintedItems.forEach {
-
-            Log.d(
-                "KOT",
-                "To be PRINT -> ${it.name} | Qty=${it.quantity} | kitchenPrintReq=${it.kitchenPrintReq}"
-            )
-        }
-
-        if (unprintedItems.isNotEmpty()) {
-
+        if (batchItems.isNotEmpty()) {
+            Log.d("KOT", "Printer called")
             printerManager.printTextKitchen(
                 PrinterRole.KITCHEN,
                 sessionKey = tableNo,
                 orderType = orderType,
-                items = unprintedItems
+                items = batchItems
             )
 
-            // ✅ MARK AS PRINTED IMMEDIATELY
-            val ids = unprintedItems.map { it.id }
-            kotItemDao.markKitchenPrinted(ids)
-
-            kotRepository.markDoneAll(tableNo)
-            kotRepository.syncBillCount(tableNo)
+            kotItemDao.markBatchKitchenPrintedBatch(batchId)
         }
 
+                    val allItems = kotItemDao.getAllItems(tableNo)
+            allItems.forEach {
+                Log.d(
+                    "WAITER_KOT",
+                    "PRINT -> ${it} - ${it.name} | Qty=${it.quantity} | Printed=${it.kitchenPrinted}"
+                )
+            }
 
+
+        kotRepository.syncBillCount(tableNo)
     }
+
+
 }
 

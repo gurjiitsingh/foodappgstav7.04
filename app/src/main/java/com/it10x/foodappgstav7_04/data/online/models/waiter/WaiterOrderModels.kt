@@ -8,7 +8,8 @@ data class WaiterOrder(
     val deviceId: String = "",
     val deviceName: String? = null,
     val status: String = "PENDING", // PENDING, ACCEPTED, BILLED
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val processedAt: Long? = null
 )
 
 data class WaiterOrderItem(

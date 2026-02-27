@@ -214,7 +214,7 @@ class WaiterKitchenViewModel(
 
             val items = cartItems.map { cart ->
                 PosKotItemEntity(
-                    id = "${cart.productId}_$tableNo",
+                    id = UUID.randomUUID().toString(),
                     sessionId = sessionId,
                     kotBatchId = batchId,
                     tableNo = tableNo,
@@ -238,25 +238,12 @@ class WaiterKitchenViewModel(
 
             kotRepository.insertItemsAndSync(tableNo, items)
 
-            // 🔥 PRINT (still inside same coroutine)
-//            val unprintedItems = kotItemDao.getUnprintedItems(tableNo)
 
-//            if (unprintedItems.isNotEmpty()) {
-//                printerManager.printTextKitchen(
-//                    PrinterRole.KITCHEN,
-//                    sessionKey = tableNo,
-//                    orderType = orderType,
-//                    items = unprintedItems
-//                )
-//
-//                kotRepository.markDoneAll(tableNo)
-//                kotRepository.syncKinchenCount(tableNo)
-//                kotRepository.syncBillCount(tableNo)
-//
-//                Log.d("KITCHEN_PRINT", "Done All printed for table=$tableNo")
-//            }
+                kotRepository.markDoneAll(tableNo)
+                kotRepository.syncKinchenCount(tableNo)
+                kotRepository.syncBillCount(tableNo)
 
-//            Log.d("KOT", "✅ KOT SAVED: batch=$batchId items=${cartItems.size}")
+
             true
 
         } catch (e: Exception) {

@@ -5,21 +5,22 @@ import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.it10x.foodappgstav7_04.data.pos.KotProcessor
+import com.it10x.foodappgstav7_04.data.pos.dao.ProcessedCloudOrderDao
+import com.it10x.foodappgstav7_04.data.pos.entities.PosCartEntity
 import com.it10x.foodappgstav7_04.data.pos.entities.PosKotItemEntity
+import com.it10x.foodappgstav7_04.data.pos.entities.ProcessedCloudOrderEntity
+import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
 class GlobalOrderSyncManager(
     private val firestore: FirebaseFirestore,
-    private val kotProcessor: KotProcessor,
-    private val onWaiterOrderReceived: (
-        orderId: String,
-        tableNo: String,
-        sessionId: String,
-        items: List<PosKotItemEntity>
-    ) -> Unit
+    private val processedDao: ProcessedCloudOrderDao,
+    private val kitchenViewModel : KitchenViewModel,
+
 ) {
 
     private var listener: ListenerRegistration? = null
@@ -27,111 +28,113 @@ class GlobalOrderSyncManager(
     // ✅ ADD THIS (missing earlier)
     private val scope = CoroutineScope(Dispatchers.IO)
 
+
     fun startListening() {
+        Log.d("KOT", "startListening called")
         if (listener != null) return
 
         listener = firestore.collection("waiter_orders")
-            .whereEqualTo("status", "PENDING")
             .addSnapshotListener { snapshot, error ->
 
-                if (error != null) {
-                    Log.e("GLOBAL_SYNC", "Firestore error", error)
-                    return@addSnapshotListener
-                }
+                if (error != null) return@addSnapshotListener
+                if (snapshot == null) return@addSnapshotListener
 
-                snapshot?.documentChanges?.forEach { change ->
-                    if (change.type == DocumentChange.Type.ADDED) {
+                // 🚫 Ignore cache snapshot completely
+//                if (snapshot.metadata.isFromCache) {
+//                    Log.d("SYNC_DEBUG", "Ignoring cache snapshot")
+//                    return@addSnapshotListener
+//                }
 
-                        val orderDoc = change.document
-                        val orderId = orderDoc.id
-                        val tableNo = orderDoc.getString("tableNo") ?: ""
-                        val sessionId = orderDoc.getString("sessionId") ?: ""
+                snapshot.documentChanges.forEach { change ->
 
-                        Log.d("GLOBAL_SYNC", "New waiter order: $orderId | Table=$tableNo")
+                    // Only new documents
+                    if (change.type != DocumentChange.Type.ADDED) return@forEach
 
-                        firestore.collection("waiter_orders")
-                            .document(orderId)
-                            .collection("items")
-                            .get()
-                            .addOnSuccessListener { itemsSnapshot ->
+                    val orderDoc = change.document
+                    val orderId = orderDoc.id
+                    val tableNo = orderDoc.getString("tableNo") ?: ""
+                    val sessionId = orderDoc.getString("sessionId") ?: ""
 
-                                val kotItems = itemsSnapshot.documents.map { itemDoc ->
+                    Log.d("SYNC_DEBUG", "Processing orderId = $orderId")
 
-                                    val productId = itemDoc.getString("productId")
-                                        ?: UUID.randomUUID().toString()
+                    scope.launch(Dispatchers.IO) {
 
-                                    val name = itemDoc.getString("productName") ?: ""
-                                    val quantity =
-                                        (itemDoc.getLong("quantity") ?: 1L).toInt()
-                                    val price =
-                                        itemDoc.getDouble("price") ?: 0.0
-                                    val taxRate =
-                                        itemDoc.getDouble("taxRate") ?: 0.0
-                                    val modifiersJson =
-                                        itemDoc.getString("modifiersJson") ?: ""
-                                    val categoryId =
-                                        itemDoc.getString("categoryId") ?: ""
-                                    val categoryName =
-                                        itemDoc.getString("categoryName") ?: "WAITER"
-                                    val kitchenPrintReq =
-                                        itemDoc.getBoolean("kitchenPrintReq") ?: true
-                                    Log.d("KOT", "FS New: name-> $name | quantity=${quantity} kitchenPrintReq=$kitchenPrintReq")
-                                    PosKotItemEntity(
-                                        id = "${productId}_$tableNo",
-                                        sessionId = sessionId,
-                                        kotBatchId = orderId,
-                                        tableNo = tableNo,
-                                        productId = productId,
-                                        name = name,
-                                        categoryId = categoryId,
-                                        categoryName = categoryName,
-                                        parentId = null,
-                                        isVariant = false,
-                                        basePrice = price,
-                                        quantity = quantity,
-                                        taxRate = taxRate,
-                                        taxType = "exclusive",
-                                        status = "DONE",
-                                        note = "",
-                                        modifiersJson = modifiersJson,
-                                        kitchenPrintReq = kitchenPrintReq,
-                                        kitchenPrinted = false,
-                                        createdAt = System.currentTimeMillis(),
-                                        source = "WAITER",
-                                        syncedToCloud = false,
-                                        syncedFromCloud = true
-                                    )
-                                }
-
-                                // ✅ PROCESS USING CORRECT SCOPE
-                                scope.launch {
-                                    kotProcessor.processWaiterOrder(
-                                        tableNo = tableNo,
-                                        sessionId = sessionId,
-                                        orderType = "DINE_IN",
-                                        items = kotItems
-                                    )
-                                }
-
-                                // ✅ Optional UI callback
-                                onWaiterOrderReceived(
-                                    orderId,
-                                    tableNo,
-                                    sessionId,
-                                    kotItems
+                        try {
+                            // 🔐 STRONG DB LOCK (atomic style)
+                            val insertResult = processedDao.insert(
+                                ProcessedCloudOrderEntity(
+                                    orderId = orderId,
+                                    processedAt = System.currentTimeMillis()
                                 )
+                            )
 
-                                // ✅ Mark order accepted
-                                firestore.collection("waiter_orders")
-                                    .document(orderId)
-                                    .update("status", "ACCEPTED")
-
-                                Log.d("GLOBAL_SYNC", "Order marked ACCEPTED: $orderId")
+                            if (insertResult == -1L) {
+                                Log.d("SYNC", "Already processed (atomic lock): $orderId")
+                                return@launch
                             }
+
+                            // 🔽 Fetch items
+                            val itemsSnapshot = firestore
+                                .collection("waiter_orders")
+                                .document(orderId)
+                                .collection("items")
+                                .get()
+                                .await()
+
+                            val cartList = itemsSnapshot.documents.map { itemDoc ->
+                                PosCartEntity(
+                                    sessionId = sessionId,
+                                    tableId = tableNo,
+                                    productId = itemDoc.getString("productId") ?: "",
+                                    name = itemDoc.getString("productName") ?: "",
+                                    categoryId = itemDoc.getString("categoryId") ?: "",
+                                    categoryName = itemDoc.getString("categoryName") ?: "",
+                                    parentId = null,
+                                    isVariant = false,
+                                    basePrice = itemDoc.getDouble("price") ?: 0.0,
+                                    quantity = (itemDoc.getLong("quantity") ?: 1L).toInt(),
+                                    taxRate = itemDoc.getDouble("taxRate") ?: 0.0,
+                                    taxType = "exclusive",
+                                    note = "",
+                                    modifiersJson = itemDoc.getString("modifiersJson") ?: "",
+                                    kitchenPrintReq = itemDoc.getBoolean("kitchenPrintReq") ?: true,
+                                    createdAt = System.currentTimeMillis()
+                                )
+                            }
+
+                            if (cartList.isEmpty()) {
+                                Log.w("SYNC", "Cart empty for orderId=$orderId")
+                                return@launch
+                            }
+
+                            Log.d("KOT", "In Firestore core Called")
+
+                            // 🚀 Direct call (NO extra launch inside ViewModel)
+                            kitchenViewModel.createKotAndPrintFirestore(
+                                orderType = "DINE_IN",
+                                sessionId = sessionId,
+                                tableNo = tableNo,
+                                cartItems = cartList,
+                                deviceId = "WAITER",
+                                deviceName = "WAITER",
+                                appVersion = "WAITER"
+                            )
+
+                            Log.d("SYNC", "Order processed successfully: $orderId")
+
+                        } catch (e: Exception) {
+                            Log.e("SYNC", "Error processing order: $orderId", e)
+                        }
                     }
                 }
             }
     }
+
+
+
+
+
+
 
     fun stopListening() {
         listener?.remove()
