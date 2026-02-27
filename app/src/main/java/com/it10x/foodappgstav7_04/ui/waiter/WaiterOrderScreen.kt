@@ -239,11 +239,17 @@ fun WaiterPosScreen(
         // productsViewModel.setSearchQuery("")
         showSearchKeyboard = false
     }
-    Box(
+//    Box(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .background(MaterialTheme.colorScheme.background)
+//    )
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-    ) {
+    )
+    {
         Row(modifier = Modifier.fillMaxSize()) {
 
             // ---------- PRODUCTS ----------
@@ -689,99 +695,67 @@ fun WaiterPosScreen(
 
         // ----------TABLET FLOATING KEYBOARD OVER PRODUCTS ----------
         if (showSearchKeyboard && !isPhone) {
-
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(100f)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(12.dp)
             ) {
-
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(12.dp)
-                ) {
-
-                    Column {
-
-
-
-                        //  Spacer(modifier = Modifier.height(8.dp))
-
-                        PosTouchKeyboardCompact(
-                            onKeyPress = { char ->
-                                searchQuery += char
-                                productsViewModel.setSearchQuery(searchQuery)
-                            },
-                            onBackspace = {
-                                if (searchQuery.isNotEmpty()) {
-                                    searchQuery = searchQuery.dropLast(1)
-                                    productsViewModel.setSearchQuery(searchQuery)
-                                }
-                            },
-                            onClear = {
-                                searchQuery = ""
-                                productsViewModel.setSearchQuery("")
-                            },
-                            onClose = {
-                                showSearchKeyboard = false
-                            },
-                            onMore = { productsViewModel.showMoreMatches(true) }
-                        )
-                    }
-                }
+                PosTouchKeyboardCompact(
+                    onKeyPress = { char ->
+                        searchQuery += char
+                        productsViewModel.setSearchQuery(searchQuery)
+                    },
+                    onBackspace = {
+                        if (searchQuery.isNotEmpty()) {
+                            searchQuery = searchQuery.dropLast(1)
+                            productsViewModel.setSearchQuery(searchQuery)
+                        }
+                    },
+                    onClear = {
+                        searchQuery = ""
+                        productsViewModel.setSearchQuery("")
+                    },
+                    onClose = {
+                        showSearchKeyboard = false
+                    },
+                    onMore = { productsViewModel.showMoreMatches(true) }
+                )
             }
         }
+
 
         // ----------PHONE FLOATING KEYBOARD OVER PRODUCTS ----------
         if (showSearchKeyboard && isPhone) {
-
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(100f)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(2.dp)
             ) {
-
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(2.dp)
-                ) {
-
-                    Column {
-
-
-
-                        //  Spacer(modifier = Modifier.height(8.dp))
-
-                        TouchKeyboardPhone(
-                            onKeyPress = { char ->
-                                searchQuery += char
-                                productsViewModel.setSearchQuery(searchQuery)
-                            },
-                            onBackspace = {
-                                if (searchQuery.isNotEmpty()) {
-                                    searchQuery = searchQuery.dropLast(1)
-                                    productsViewModel.setSearchQuery(searchQuery)
-                                }
-                            },
-                            onClear = {
-                                searchQuery = ""
-                                productsViewModel.setSearchQuery("")
-                            },
-                            onClose = {
-                                showSearchKeyboard = false
-                            },
-                            onMore = { productsViewModel.showMoreMatches(true) }
-                        )
-                    }
-                }
+                TouchKeyboardPhone(
+                    onKeyPress = { char ->
+                        searchQuery += char
+                        productsViewModel.setSearchQuery(searchQuery)
+                    },
+                    onBackspace = {
+                        if (searchQuery.isNotEmpty()) {
+                            searchQuery = searchQuery.dropLast(1)
+                            productsViewModel.setSearchQuery(searchQuery)
+                        }
+                    },
+                    onClear = {
+                        searchQuery = ""
+                        productsViewModel.setSearchQuery("")
+                    },
+                    onClose = {
+                        showSearchKeyboard = false
+                    },
+                    onMore = { productsViewModel.showMoreMatches(true) }
+                )
             }
         }
+
 
 
 

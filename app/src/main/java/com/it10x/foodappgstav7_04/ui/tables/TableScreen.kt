@@ -234,7 +234,8 @@ fun TableScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-    ) {
+    )
+    {
 
 
         Row(modifier = Modifier.fillMaxSize()) {

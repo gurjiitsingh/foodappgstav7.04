@@ -246,7 +246,13 @@ fun ClassicPosScreen(
         showSearchKeyboard = false
     }
 
-    Box(
+//    Box(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .background(MaterialTheme.colorScheme.background)
+//    )
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
@@ -601,15 +607,15 @@ fun ClassicPosScreen(
 
         // ---------- MOBILE CART FAB ----------
 //        if (isPhone && cartCount > 0) {
-        if (isPhone) {
-            ClassicFloatingCartButton(
-                count = cartCount,
-                onClick = { showCartSheet = true },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            )
-        }
+//        if (isPhone) {
+//            ClassicFloatingCartButton(
+//                count = cartCount,
+//                onClick = { showCartSheet = true },
+//                modifier = Modifier
+//                  //  .align(Alignment.BottomEnd)
+//                    .padding(16.dp)
+//            )
+//        }
     }
 
 
