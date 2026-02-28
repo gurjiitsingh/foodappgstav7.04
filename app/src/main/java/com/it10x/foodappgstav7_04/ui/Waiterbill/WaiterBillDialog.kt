@@ -190,118 +190,19 @@ fun WaiterBillDialog(
                         }
                     }
 
-//                    Box(
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .clickable { activeInput = "PHONE" }
-//                    ) {
-//                        OutlinedTextField(
-//                            value = uiState.value.customerPhone,
-//                            onValueChange = {},
-//                            label = { Text("Customer Phone") },
-//                            readOnly = true,
-//                            enabled = false,
-//                            singleLine = true,
-//                            colors = OutlinedTextFieldDefaults.colors(
-//                                disabledContainerColor =
-//                                    if (activeInput == "PHONE") Color(0xFF1E2A22)  // darker green tone
-//                                    else Color(0xFF2A2A2A),
-//
-//                                disabledBorderColor =
-//                                    if (activeInput == "PHONE") Color(0xFF4CAF50)
-//                                    else Color.Gray,
-//
-//                                disabledTextColor = Color.White,
-//                                disabledLabelColor = Color.LightGray
-//                            ),
-//                            textStyle = LocalTextStyle.current.copy(fontSize = 15.sp),
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .heightIn(min = 52.dp)   // 👈 keeps safe height
-//                        )
-//                    }
-//                    if (suggestions.value.isNotEmpty() && activeInput == "PHONE") {
-//
-//                        Card(
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .padding(top = 4.dp),
-//                            colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A2A))
-//                        ) {
-//                            Column {
-//                                suggestions.value.forEach { customer ->
-//
-//                                    Row(
-//                                        modifier = Modifier
-//                                            .fillMaxWidth()
-//                                            .clickable {
-//                                                billViewModel.setCustomerPhone(customer.phone)
-//                                                billViewModel.clearCustomerSuggestions()
-//                                                activeInput = null
-//                                            }
-//                                            .padding(8.dp)
-//                                    ) {
-//                                        Text(
-//                                            text = "${customer.phone}  (${customer.name})",
-//                                            color = Color.White,
-//                                            fontSize = 14.sp
-//                                        )
-//                                    }
-//
-//                                    Divider(color = Color.DarkGray)
-//                                }
-//                            }
-//                        }
-//                    }
 
 
 
-
-
-
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        "Select Options",
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 4.dp)
-                    )
-
-
-
-
-
-                    // ---------- PAYMENT BUTTONS (Compact, Pastel Colors) ----------
-//                    Text("Select Payment", style = MaterialTheme.typography.titleSmall)
-                    Spacer(Modifier.height(4.dp))
-
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
+                        Spacer(Modifier.height(14.dp))
 
                         // Pay Later Button
                         Button(
                             onClick = {
 
 
-                                val phone = uiState.value.customerPhone.trim()
-
-                                if (phone.length != 10) {
-                                    Toast.makeText(
-                                        context,
-                                        "Enter valid 10 digit phone number",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    return@Button
-                                }
-
-
-
                                 billViewModel.payBill(
                                     payments = listOf(
-                                        PaymentInput("DELIVERY_PENDING", remainingAmount)
+                                        PaymentInput("CASH", remainingAmount)
                                     ),
                                     name = "Customer",
                                     phone = uiState.value.customerPhone
@@ -309,49 +210,16 @@ fun WaiterBillDialog(
 
                                 onDismiss()
                             },
-                            modifier = Modifier.weight(1f).height(38.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(38.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF9E9E9E),
+                                containerColor = Color(0xFF4CAF50), // Green for cash
                                 contentColor = Color.White
                             )
-                        ) { Text("Close Table", fontSize = 13.sp) }
-
-
-
-
-
-                    }
-
-
-// ===============================
-// GLOBAL NUMPAD (Single Keyboard)
-// ===============================
-
-
-
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Divider()
-                        Spacer(modifier = Modifier.height(8.dp))
-
-//                    NumPad { label ->
-//                        handleInput(
-//                            label = label,
-//                            activeInput = activeInput,
-//                            uiState = uiState.value,
-//                            discountFlat = discountFlat,
-//                            discountPercent = discountPercent,
-//                            creditAmount = creditAmount,
-//                            billViewModel = billViewModel
-//                        )
-//                    }
-
-
-
-
-
-
-
-
+                        ) {
+                            Text("Close Table", fontSize = 13.sp)
+                        }
 
 
 
@@ -364,83 +232,3 @@ fun WaiterBillDialog(
 
 
 
-fun handleInput(
-    label: String,
-    activeInput: String?,
-    uiState: BillUiState,
-    discountFlat: MutableState<String>,
-    discountPercent: MutableState<String>,
-    creditAmount: MutableState<String>,
-    billViewModel: BillViewModel
-){
-    when (activeInput) {
-
-        "PHONE" -> {
-            when (label) {
-
-                "←" -> {
-                    if (uiState.customerPhone.isNotEmpty()) {
-
-                        val newPhone = uiState.customerPhone.dropLast(1)
-                        billViewModel.setCustomerPhone(newPhone)
-
-                        if (newPhone.length in 3..9) {
-                            billViewModel.observeCustomerSuggestions(newPhone)
-                        } else {
-                            billViewModel.clearCustomerSuggestions()
-                        }
-                    }
-                }
-
-                "." -> {
-                    // ignore dot
-                }
-
-                else -> {
-                    if (uiState.customerPhone.length < 10) {
-
-                        val newPhone = uiState.customerPhone + label
-                        billViewModel.setCustomerPhone(newPhone)
-
-                        if (newPhone.length in 3..9) {
-                            billViewModel.observeCustomerSuggestions(newPhone)
-                        } else {
-                            billViewModel.clearCustomerSuggestions()
-                        }
-                    }
-                }
-            }
-        }
-
-
-
-        "FLAT" -> {
-            when (label) {
-                "←" -> discountFlat.value = discountFlat.value.dropLast(1)
-                else -> discountFlat.value += label
-            }
-
-            billViewModel.setFlatDiscount(
-                discountFlat.value.toDoubleOrNull() ?: 0.0
-            )
-        }
-
-        "PERCENT" -> {
-            when (label) {
-                "←" -> discountPercent.value = discountPercent.value.dropLast(1)
-                else -> discountPercent.value += label
-            }
-
-            billViewModel.setPercentDiscount(
-                discountPercent.value.toDoubleOrNull() ?: 0.0
-            )
-        }
-
-        "CREDIT" -> {
-            when (label) {
-                "←" -> creditAmount.value = creditAmount.value.dropLast(1)
-                else -> creditAmount.value += label
-            }
-        }
-    }
-}

@@ -56,7 +56,7 @@ class CartRepository(
         return count == 0
     }
     // ---------- ADD ----------
-    suspend fun addToCart(product: PosCartEntity, tableNo: String) {
+    suspend fun  addToCart(product: PosCartEntity, tableNo: String) {
 //        val existing = dao.getItemByIdForTable(product.productId, tableId = tableNo)
 //       // Log.d("TABLE_DEBUG", "item :${existing} table${tableNo}")
 //        if (existing == null) {

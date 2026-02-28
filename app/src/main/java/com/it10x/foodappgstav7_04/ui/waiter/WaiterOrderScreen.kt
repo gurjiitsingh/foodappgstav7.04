@@ -250,16 +250,16 @@ fun WaiterPosScreen(
             .background(MaterialTheme.colorScheme.background)
     )
     {
-        Row(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier
+            .weight(1f)   // 🔥 VERY IMPORTANT
+            .fillMaxWidth()
+        ) {
 
-            // ---------- PRODUCTS ----------
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .padding(12.dp)
             ) {
-
-                // ---------- ORDER CONTROLS ----------
                 // ---------- ORDER CONTROLS PHONE ----------
                 if (isPhone) {
 
@@ -459,8 +459,7 @@ fun WaiterPosScreen(
                         }
                     }
                 }
-
-// --------- ORDER CONTROLS TABLET ------
+                // --------- ORDER CONTROLS TABLET ------
                 if(!isPhone) {
                     Row(
                         modifier = Modifier
@@ -590,12 +589,6 @@ fun WaiterPosScreen(
                         }
                     }
                 }
-
-
-
-                // ---------- SEARCH BOX ----------
-
-
                 WaiterProductList(
                     filteredProducts = filteredProducts,
                     //  variants = variants,
@@ -608,8 +601,6 @@ fun WaiterPosScreen(
                         // productsViewModel.setSearchQuery("")
                     }
                 )
-
-
                 if (showCategorySelector) {
                     CategorySelectorDialog(
                         categories = categories,
@@ -624,11 +615,6 @@ fun WaiterPosScreen(
                         onDismiss = { showCategorySelector = false }
                     )
                 }
-
-
-
-
-
                 if (showTableSelector && orderType == "DINE_IN") {
                     TableSelectorGrid(
                         tables = tables, // ✅ use dynamic list
@@ -649,51 +635,8 @@ fun WaiterPosScreen(
                         onDismiss = { showTableSelector = false }
                     )
                 }
-
-
             }
-
-
-
-
-            // ---------- CART (TABLET ONLY) ----------
-
-            if (!isPhone) {
-                Box(
-                    modifier = Modifier
-                        .width(190.dp)
-                        .fillMaxHeight()
-                ) {
-
-                    // ---------- CART (ALWAYS VISIBLE) ----------
-                    WaiterRightPanel(
-                        cartViewModel = cartViewModel,
-                        ordersViewModel = ordersViewModel,
-                        tableViewModel = tableVm,
-                        orderType = orderType,
-                        tableNo = tableId ?: orderType,
-                        tableName = selectedTableName,
-                        paymentType = paymentType,
-                        onPaymentChange = { paymentType = it },
-                        onOrderPlaced = {
-                            showSearchKeyboard = false
-                        },
-                        onOpenKitchen = { showKitchen = true },
-                        onOpenBill = { showBill = true },
-                        isMobile = false,
-                        repository = repository
-                    )
-
-
-
-                }
-            }
-
-
-
         }
-
-        // ----------TABLET FLOATING KEYBOARD OVER PRODUCTS ----------
         if (showSearchKeyboard && !isPhone) {
             Box(
                 modifier = Modifier
@@ -723,8 +666,6 @@ fun WaiterPosScreen(
                 )
             }
         }
-
-
         // ----------PHONE FLOATING KEYBOARD OVER PRODUCTS ----------
         if (showSearchKeyboard && isPhone) {
             Box(
@@ -755,11 +696,6 @@ fun WaiterPosScreen(
                 )
             }
         }
-
-
-
-
-
 
     }
 

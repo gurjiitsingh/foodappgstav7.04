@@ -224,22 +224,16 @@ fun PosScreen(
             .background(MaterialTheme.colorScheme.background)
     )
     {
-
-
-        Row(
-            modifier = Modifier
+        Row(modifier = Modifier
                 .weight(1f)   // 🔥 VERY IMPORTANT
                 .fillMaxWidth()
         ) {
 
-
-            // ---------- PRODUCTS ----------
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .padding(12.dp)
             ) {
-
                 // ---------- ORDER CONTROLS PHONE ----------
                 if (isPhone) {
 
@@ -440,10 +434,7 @@ fun PosScreen(
                         }
                     }
                 }
-
                 // --------- ORDER CONTROLS TABLET ------
-
-
                 if (!isPhone) {
                     Row(
                         modifier = Modifier
@@ -613,10 +604,7 @@ fun PosScreen(
                         }
                     }
                 }
-
                 // ---------- SEARCH BOX ----------
-
-
                 ProductList(
                     filteredProducts = filteredProducts,
                   //  variants = variants,
@@ -629,8 +617,6 @@ fun PosScreen(
                        // productsViewModel.setSearchQuery("")
                     }
                 )
-
-
                 if (showCategorySelector) {
                     CategorySelectorDialog(
                         categories = categories,
@@ -645,11 +631,6 @@ fun PosScreen(
                         onDismiss = { showCategorySelector = false }
                     )
                 }
-
-
-
-
-
                 if (showTableSelector && orderType == "DINE_IN") {
                     TableSelectorGrid(
                         tables = tables, // ✅ use dynamic list
@@ -670,51 +651,8 @@ fun PosScreen(
                         onDismiss = { showTableSelector = false }
                     )
                 }
-
-
             }
-
-
-
-
-            // ---------- CART (TABLET ONLY) ----------
-
-            if (!isPhone) {
-                Box(
-                    modifier = Modifier
-                        .width(190.dp)
-                        .fillMaxHeight()
-                ) {
-
-                    // ---------- CART (ALWAYS VISIBLE) ----------
-                    RightPanel(
-                        cartViewModel = cartViewModel,
-                        ordersViewModel = ordersViewModel,
-                        tableViewModel = tableVm,
-                        orderType = orderType,
-                        tableNo = tableId ?: orderType,
-                        tableName = selectedTableName,
-                        paymentType = paymentType,
-                        onPaymentChange = { paymentType = it },
-                        onOrderPlaced = {
-                            showSearchKeyboard = false
-                        },
-                        onOpenKitchen = { showKitchen = true },
-                        onOpenBill = { showBill = true },
-                        isMobile = false,
-                        repository = repository
-                    )
-
-
-
-                }
-            }
-
-
-
         }
-
-
         // ----------TABLET FLOATING KEYBOARD OVER PRODUCTS ----------
         if (showSearchKeyboard && !isPhone) {
             Box(
@@ -745,8 +683,6 @@ fun PosScreen(
                 )
             }
         }
-
-
         // ----------PHONE FLOATING KEYBOARD OVER PRODUCTS ----------
         if (showSearchKeyboard && isPhone) {
             Box(
@@ -778,19 +714,6 @@ fun PosScreen(
             }
         }
 
-
-
-        // ---------- MOBILE CART FAB ----------
-//        if (isPhone && cartCount > 0) {
-//        if (isPhone) {
-//            FloatingCartButton(
-//                count = cartCount,
-//                onClick = { showCartSheet = true },
-//                modifier = Modifier
-//                //    .align(Alignment.BottomEnd)
-//                    .padding(16.dp)
-//            )
-//        }
     }
 
 
