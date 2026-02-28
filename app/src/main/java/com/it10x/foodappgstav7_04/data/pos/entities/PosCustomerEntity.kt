@@ -13,54 +13,37 @@ import androidx.room.PrimaryKey
 )
 data class PosCustomerEntity(
 
-    // =====================================================
-    // CORE IDENTIFIERS
-    // =====================================================
     @PrimaryKey
-    val id: String,                 // UUID (same as Firestore doc id)
+    var id: String = "",                 // MUST have default
 
-    val ownerId: String,
-    val outletId: String,
+    var ownerId: String = "",
+    var outletId: String = "",
 
-    // =====================================================
-    // CUSTOMER BASIC INFO
-    // =====================================================
-    val name: String?,
-    val phone: String,
-    val countryCode: String? = "+91",
-    val email: String? = null,
+    // BASIC
+    var name: String? = null,
+    var phone: String = "",              // MUST have default
+    var countryCode: String? = null,
+    var normalizedPhone: String? = null,
+    var email: String? = null,
 
-    // =====================================================
-    // ADDRESS (DEFAULT)
-    // =====================================================
-    val addressLine1: String? = null,
-    val addressLine2: String? = null,
-    val city: String? = null,
-    val state: String? = null,
-    val zipcode: String? = null,
-    val landmark: String? = null,
+    // ADDRESS
+    var addressLine1: String? = null,
+    var addressLine2: String? = null,
+    var city: String? = null,
+    var state: String? = null,
+    var zipcode: String? = null,
+    var landmark: String? = null,
 
-    // =====================================================
-    // CREDIT CONTROL (VERY IMPORTANT)
-    // =====================================================
-    val creditLimit: Double = 0.0,
-    val currentDue: Double = 0.0,
+    // CREDIT
+    var creditLimit: Double = 0.0,
+    var currentDue: Double = 0.0,
 
-    // =====================================================
-    // CUSTOMER META
-    // =====================================================
-    val isActive: Boolean = true,
-    val notes: String? = null,
+    // META
+    var source: String = "POS",
+    var isActive: Boolean = true,
+    var createdAt: Long = 0L,            // MUST have default
+    var updatedAt: Long? = null,
 
-    // =====================================================
-    // TIMING
-    // =====================================================
-    val createdAt: Long,
-    val updatedAt: Long? = null,
-
-    // =====================================================
-    // SYNC CONTROL
-    // =====================================================
-    val syncStatus: String = "PENDING",
-    val lastSyncedAt: Long? = null
+    var syncStatus: String = "PENDING",
+    var lastSyncedAt: Long? = null
 )

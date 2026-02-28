@@ -392,8 +392,11 @@ class MainActivity : ComponentActivity() {
                                     NavigationDrawerItem(
                                         label = { Text("Delivery Settlement") },
                                         selected = false,
-                                        onClick = { navController.navigate("delivery_settlement") }
+                                        onClick = {
+                                            scope.launch { drawerState.close() }
+                                            navController.navigate("delivery_settlement") }
                                     )
+
 
 
                                     // ===============================

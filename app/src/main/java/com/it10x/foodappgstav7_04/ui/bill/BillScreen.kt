@@ -90,10 +90,6 @@ fun BillScreen(
 
     ) {
         // 🔹 Fixed Header
-
-
-
-
         // 🔹 Scrollable Item List (takes all remaining space)
         Box(
             modifier = Modifier

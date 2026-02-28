@@ -10,17 +10,28 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.it10x.foodappgstav7_04.firebase.ClientIdStore
+import com.it10x.foodappgstav7_04.viewmodel.CustomerSyncViewModel
+import com.it10x.foodappgstav7_04.data.online.sync.CustomerSyncViewModelFactory
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 private const val ADMIN_PASSWORD = "gsta123456"
 
 @Composable
 fun AdvancedSettingsScreen() {
-
     val context = LocalContext.current
+
+    // ViewModel for full re-sync
+    val customerSyncVm: CustomerSyncViewModel = viewModel(
+        factory = CustomerSyncViewModelFactory(context.applicationContext as android.app.Application)
+    )
+
+    val customerSyncing by customerSyncVm.syncing.collectAsState()
+    val customerStatus by customerSyncVm.status.collectAsState()
 
     var showDialog by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var accessGranted by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -36,35 +47,77 @@ fun AdvancedSettingsScreen() {
 
         Divider()
 
-        Text(
-            text = "Danger Zone",
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.titleMedium
-        )
-
-        Button(
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.error
-            ),
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {
-                password = ""
-                error = null
-                showDialog = true
+        // 🔐 Show admin options only after password check
+        if (!accessGranted) {
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    password = ""
+                    error = null
+                    showDialog = true
+                }
+            ) {
+                Text("Enter Admin Mode")
             }
-        ) {
-            Text("Change Client Setup")
+        } else {
+            Text(
+                text = "Admin Access Granted ✅",
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            // ⚠️ Dangerous Actions
+            Text(
+                text = "Danger Zone",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            // 🔴 Force Upload — bypass syncStatus
+            Button(
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !customerSyncing,
+                onClick = { customerSyncVm.forceSyncCustomers() }  // call your bypass method
+            ) {
+                Text(if (customerSyncing) "Forcing Upload…" else "Force Customer Upload")
+            }
+
+            Text(
+                text = customerStatus,
+                color = if (customerStatus.contains("fail", true))
+                    MaterialTheme.colorScheme.error
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 🔁 Reset Client Config
+            OutlinedButton(
+                onClick = {
+                    ClientIdStore.clear(context)
+                    Process.killProcess(Process.myPid())
+                },
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Reset Client Setup")
+            }
         }
     }
 
-    // 🔐 PASSWORD DIALOG
+    // 🧩 Password Dialog
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Confirm Action") },
+            title = { Text("Admin Access Required") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Enter admin password to continue")
+                    Text("Enter admin password to unlock advanced options")
 
                     var passwordVisible by remember { mutableStateOf(false) }
 
@@ -88,7 +141,6 @@ fun AdvancedSettingsScreen() {
                         }
                     )
 
-
                     if (error != null) {
                         Text(
                             text = error!!,
@@ -101,8 +153,8 @@ fun AdvancedSettingsScreen() {
             confirmButton = {
                 TextButton(onClick = {
                     if (password == ADMIN_PASSWORD) {
-                        ClientIdStore.clear(context)
-                        Process.killProcess(Process.myPid())
+                        accessGranted = true
+                        showDialog = false
                     } else {
                         error = "Invalid password"
                     }
