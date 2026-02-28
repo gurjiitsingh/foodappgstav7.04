@@ -203,7 +203,7 @@ fun WaiterBillDialogPhone(
 
                                 billViewModel.payBill(
                                     payments = listOf(
-                                        PaymentInput("CASH", remainingAmount)
+                                        PaymentInput("WAITER_PENDING", remainingAmount)
                                     ),
                                     name = "Customer",
                                     phone = uiState.value.customerPhone
@@ -221,9 +221,6 @@ fun WaiterBillDialogPhone(
                         ) {
                             Text("Close Table", fontSize = 13.sp)
                         }
-
-
-
 
 
 

@@ -359,27 +359,47 @@ class BillViewModel(
                 .filter { it.mode == "DELIVERY_PENDING" }
                 .sumOf { it.amount }
 
+                val waiterPending = payments
+                    .filter { it.mode == "WAITER_PENDING" }
+                    .sumOf { it.amount }
+
+//            val paidAmount = when {
+//                deliveryPending > 0 -> 0.0
+//                else -> totalPaid
+//            }
+//
+//            val dueAmount = when {
+//                deliveryPending > 0 -> grandTotal
+//                else -> (grandTotal - totalPaid).coerceAtLeast(0.0)
+//            }
+
+                val paidAmount = when {
+                    deliveryPending > 0 -> 0.0
+                    waiterPending > 0 -> 0.0
+                    else -> totalPaid
+                }
+
+                val dueAmount = when {
+                    deliveryPending > 0 -> grandTotal
+                    waiterPending > 0 -> 0.0   // 🔥 no due tracking
+                    else -> (grandTotal - totalPaid).coerceAtLeast(0.0)
+                }
 
 
-            val paidAmount = when {
-                deliveryPending > 0 -> 0.0
-                else -> totalPaid
-            }
+//            val paymentStatus = when {
+//                deliveryPending > 0 -> "DELIVERY_PENDING"
+//                totalPaid == 0.0 && totalCredit > 0 -> "CREDIT"
+//                dueAmount > 0 -> "PARTIAL"
+//                else -> "PAID"
+//            }
 
-            val dueAmount = when {
-                deliveryPending > 0 -> grandTotal
-                else -> (grandTotal - totalPaid).coerceAtLeast(0.0)
-            }
-
-
-            val paymentStatus = when {
-                deliveryPending > 0 -> "DELIVERY_PENDING"
-                totalPaid == 0.0 && totalCredit > 0 -> "CREDIT"
-                dueAmount > 0 -> "PARTIAL"
-                else -> "PAID"
-            }
-
-
+                val paymentStatus = when {
+                    waiterPending > 0 -> "WAITER_PENDING"
+                    deliveryPending > 0 -> "DELIVERY_PENDING"
+                    totalPaid == 0.0 && totalCredit > 0 -> "CREDIT"
+                    dueAmount > 0 -> "PARTIAL"
+                    else -> "PAID"
+                }
 
             // ===========================
             // PHONE VALIDATION
@@ -521,7 +541,7 @@ class BillViewModel(
                 createdAt = now,
                 updatedAt = now,
 
-                syncStatus = "PENDING",
+                syncStatus = if (paymentStatus == "WAITER_PENDING") "SYNCED" else "PENDING",
                 lastSyncedAt = null,
                 notes = null
             )

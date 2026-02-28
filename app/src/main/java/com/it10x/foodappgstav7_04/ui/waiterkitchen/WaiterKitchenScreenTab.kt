@@ -33,8 +33,12 @@ fun WaiterKitchenScreenTab(
     val context = LocalContext.current
 
     // Auto-close when empty
-    LaunchedEffect(cartItems) {
-        if (cartItems.isEmpty()) onKitchenEmpty()
+    val loading by waiterkitchenViewModel.loading.collectAsState()
+
+    LaunchedEffect(cartItems, loading) {
+        if (cartItems.isEmpty() && !loading) {
+            onKitchenEmpty()
+        }
     }
 
     if (cartItems.isEmpty()) {

@@ -169,7 +169,7 @@ fun WaiterBillDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Actions",
+                            "Actions1",
                             style = MaterialTheme.typography.titleSmall,
                             color = Color.White
                         )
@@ -195,31 +195,23 @@ fun WaiterBillDialog(
 
                         Spacer(Modifier.height(14.dp))
 
-                        // Pay Later Button
-                        Button(
-                            onClick = {
+                    Button(
+                        onClick = {
 
-
-                                billViewModel.payBill(
-                                    payments = listOf(
-                                        PaymentInput("CASH", remainingAmount)
-                                    ),
-                                    name = "Customer",
-                                    phone = uiState.value.customerPhone
-                                )
-
-                                onDismiss()
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(38.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF4CAF50), // Green for cash
-                                contentColor = Color.White
+                            billViewModel.payBill(
+                                payments = listOf(
+                                    PaymentInput("DELIVERY_PENDING", remainingAmount)
+                                ),
+                                name = "Customer",
+                                phone = uiState.value.customerPhone
                             )
-                        ) {
-                            Text("Close Table", fontSize = 13.sp)
-                        }
+
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f).height(38.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9E9E9E), contentColor = Color.White)
+                    ) { Text("Close Table", fontSize = 13.sp) }
+
 
 
 

@@ -67,6 +67,7 @@ import com.it10x.foodappgstav7_04.ui.components.PosTouchKeyboardCompact
 import com.it10x.foodappgstav7_04.ui.components.TouchKeyboardPhone
 import com.it10x.foodappgstav7_04.ui.pos.CategorySelectorDialog
 import com.it10x.foodappgstav7_04.ui.pos.PosSessionViewModel
+import com.it10x.foodappgstav7_04.ui.pos.RightPanel
 import com.it10x.foodappgstav7_04.ui.pos.TableSelectorGrid
 import com.it10x.foodappgstav7_04.ui.waiter.WaiterProductList
 import com.it10x.foodappgstav7_04.ui.waiter.WaiterRightPanel
@@ -634,6 +635,36 @@ fun WaiterPosScreen(
 
                         onDismiss = { showTableSelector = false }
                     )
+                }
+            }
+            if (!isPhone) {
+                Box(
+                    modifier = Modifier
+                        .width(190.dp)
+                        .fillMaxHeight()
+                ) {
+
+                    // ---------- CART (ALWAYS VISIBLE) ----------
+                    RightPanel(
+                        cartViewModel = cartViewModel,
+                        ordersViewModel = ordersViewModel,
+                        tableViewModel = tableVm,
+                        orderType = orderType,
+                        tableNo = tableId ?: orderType,
+                        tableName = selectedTableName,
+                        paymentType = paymentType,
+                        onPaymentChange = { paymentType = it },
+                        onOrderPlaced = {
+                            showSearchKeyboard = false
+                        },
+                        onOpenKitchen = { showKitchen = true },
+                        onOpenBill = { showBill = true },
+                        isMobile = false,
+                        repository = repository
+                    )
+
+
+
                 }
             }
         }
