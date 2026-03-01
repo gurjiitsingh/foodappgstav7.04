@@ -68,15 +68,7 @@ fun WaiterKitchenMobile(
                     item = item,
                     cartViewModel = cartViewModel,
                     tableNo = tableNo,
-                    onCartActionDirectMoveToBill = { cartItem, print ->
-                        waiterkitchenViewModel.sendSingleItemDirectlyToBill_Print_noPrint(
-                            cart = cartItem,
-                            orderType = orderType,
-                            tableNo = tableNo,
-                            sessionId = sessionId,
-                            print = print
-                        )
-                    }
+
                 )
             }
         }

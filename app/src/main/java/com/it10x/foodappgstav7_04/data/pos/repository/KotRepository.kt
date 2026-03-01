@@ -29,7 +29,7 @@ class KotRepository(
         items: List<PosKotItemEntity>
     ) {
         kotItemDao.insertAll(items)
-        syncKitchenCount(tableNo)
+
     }
 
 
@@ -44,7 +44,8 @@ class KotRepository(
     }
 
     private suspend fun syncBillCounters(tableNo: String) {
-        val billCount = kotItemDao.countDoneItems(tableNo) ?: 0
+       // val billCount = kotItemDao.countDoneItems(tableNo) ?: 0
+        val billCount = kotItemDao.getBillQtyCount(tableNo) ?: 0
         val billAmount = kotItemDao.sumDoneAmount(tableNo) ?: 0.0
 
         tableDao.updateBill(tableNo, billCount, billAmount)

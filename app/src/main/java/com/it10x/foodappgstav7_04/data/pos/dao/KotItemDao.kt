@@ -370,13 +370,24 @@ AND status = 'PENDING'
 """)
     suspend fun countBillDone(tableNo: String): Int
 
+//    @Query("SELECT COUNT(*) FROM pos_kot_items WHERE tableNo = :tableNo AND status = 'DONE'")
+//    suspend fun countDoneItems(tableNo: String): Int?
 
+    @Query("""
+    SELECT COUNT(*) 
+    FROM pos_kot_items 
+    WHERE tableNo = :tableNo 
+    AND status = 'DONE'
+""")
+    suspend fun getBillLineCount(tableNo: String): Int?
 
-
-
-
-    @Query("SELECT COUNT(*) FROM pos_kot_items WHERE tableNo = :tableNo AND status = 'DONE'")
-    suspend fun countDoneItems(tableNo: String): Int?
+    @Query("""
+    SELECT SUM(quantity) 
+    FROM pos_kot_items 
+    WHERE tableNo = :tableNo 
+    AND status = 'DONE'
+""")
+    suspend fun getBillQtyCount(tableNo: String): Int?
 
     @Query("""
 SELECT SUM(basePrice * quantity)

@@ -31,7 +31,7 @@ fun CartRow(
     item: PosCartEntity,
     tableNo: String,
     cartViewModel: CartViewModel,
-    onCartActionDirectMoveToBill: (item: PosCartEntity, print: Boolean) -> Unit
+
 ) {
 
     var showNoteDialog by remember { mutableStateOf(false) }

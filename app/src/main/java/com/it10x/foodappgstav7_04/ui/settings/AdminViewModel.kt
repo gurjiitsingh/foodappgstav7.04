@@ -10,7 +10,30 @@ class AdminViewModel(
     private val kotItemDao: KotItemDao
 ) : ViewModel() {
 
+
     fun logAllKotItemsOnce() {
+        viewModelScope.launch {
+
+            val items = kotItemDao.getTotalKotItemsOnce()
+
+            Log.d("KOT_DEBUG", "Total items = ${items.size}")
+
+            items.forEach { item ->
+                Log.d(
+                    "KOT_DEBUG",
+                    "Qty=${item.quantity}, " +
+                            "Table=${item.tableNo}, " +
+                            "Name=${item.name}, " +
+                            "Status=${item.status}, " +
+                            "Printed=${item.kitchenPrinted}"
+
+                    // "BatchId=${item.kotBatchId}, " +
+                    // "ID=${item.id}"
+                )
+            }
+        }
+    }
+    fun logAllKotItemsOnce1() {
         viewModelScope.launch {
 
             val items = kotItemDao.getTotalKotItemsOnce()
