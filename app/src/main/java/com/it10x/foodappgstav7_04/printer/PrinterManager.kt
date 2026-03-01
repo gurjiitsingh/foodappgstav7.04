@@ -92,10 +92,14 @@ class PrinterManager(
     text: String,
     onResult: (Boolean) -> Unit = {}
 ) {
-        Log.e("PRINT", "printer configured for role=$role")
+      //  Log.e("PRINT", "printer configured for role=$role")
+        Log.e(
+            "PRINTTEST",
+            "\n================= printText =================\n$text\n=================================================="
+        )
     val config = prefs.getPrinterConfig(role)
     if (config == null) {
-        Log.e("PRINT", "No printer configured for role=$role")
+        Log.e("PRINTTEST", "No printer configured for role=$role")
         onResult(false)
         return
     }
@@ -153,14 +157,14 @@ class PrinterManager(
         order: PrintOrder,
         onResult: (Boolean) -> Unit = {}
     ) {
-        Log.e("PRINT_NEW", "Printing for role=$role")
+      //  Log.e("PRINT_NEW", "Printing for role=$role")
 
         // Get printer configuration and preferences
         val config = prefs.getPrinterConfig(role)
 
 
         if (config == null) {
-            Log.e("PRINT_NEW", "No printer configured for role=$role")
+            Log.e("PPRINTTEST", "No printer configured for role=$role")
             onResult(false)
             return
         }
@@ -193,6 +197,10 @@ class PrinterManager(
 //            "PRINT_NEW",
 //            "${info.defaultCurrency} Printer type=${config.type}, size=$pageSize, bluetooth=${config.bluetoothAddress}, ip=${config.ip}, "
 //        )
+        Log.e(
+            "PRINTTEST",
+            "\n================= BILL NEWTEXT =================\n$receiptText\n=================================================="
+        )
 
         // ✅ Printing logic (kept same as before)
         when (config.type) {
@@ -250,12 +258,12 @@ class PrinterManager(
         items: List<PosKotItemEntity>,
         onResult: (Boolean) -> Unit = {}
     ) {
-        Log.d("SYNC_DEBUG", "PRINT CALLED")
-        Log.e("KOT", "STEP 1 → Role=$role")
-        Log.e("KOT", "STEP 2 → Items size=${items.size}")
+//        Log.d("SYNC_DEBUG", "PRINT CALLED")
+//        Log.e("KOT", "STEP 1 → Role=$role")
+//        Log.e("KOT", "STEP 2 → Items size=${items.size}")
         val config = prefs.getPrinterConfig(role)
         if (config == null) {
-            Log.e("PRINT", "No printer configured for role=$role")
+            Log.e("PRINTTEST", "No printer configured for role=$role")
             onResult(false)
             return
         }
@@ -267,7 +275,7 @@ class PrinterManager(
         )
 
         Log.e(
-            "KOT",
+            "PRINTTEST",
             "\n================= KITCHEN RECEIPT =================\n$text\n=================================================="
         )
 
