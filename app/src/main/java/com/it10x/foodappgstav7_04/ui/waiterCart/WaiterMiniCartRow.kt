@@ -19,7 +19,6 @@ fun WaiterMiniCartRow(
     item: PosCartEntity,
     tableNo: String,
     cartViewModel: CartViewModel,
-    onCartActionDirectMoveToBill: (item: PosCartEntity, print: Boolean) -> Unit,
     onOpenKitchen: () -> Unit
 ) {
     Row(

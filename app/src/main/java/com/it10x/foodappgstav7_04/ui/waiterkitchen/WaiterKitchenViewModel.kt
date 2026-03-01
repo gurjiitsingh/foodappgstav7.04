@@ -3,6 +3,8 @@ package com.it10x.foodappgstav7_04.ui.waiterkitchen
 import android.app.Application
 import android.os.Build
 import android.util.Log
+import androidx.compose.foundation.lazy.items
+
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.it10x.foodappgstav7_04.data.PrinterRole
@@ -69,7 +71,7 @@ class WaiterKitchenViewModel(
                 initialValue = emptyList()
             )
 
-
+    private var isProcessing = false
 
     private val kotRepository = KotRepository(
         AppDatabaseProvider.get(app).kotBatchDao(),
@@ -89,12 +91,16 @@ class WaiterKitchenViewModel(
         cartList: List<PosCartEntity>,
         tableNo: String,
         deviceId: String,
-        deviceName: String?
+        deviceName: String?,
+
     ) {
+        if (isProcessing) return   // 🔥 HARD STOP
+
         viewModelScope.launch {
 
             if (cartList.isEmpty()) return@launch
 
+            isProcessing = true
             _loading.value = true
 
             try {
@@ -133,43 +139,14 @@ class WaiterKitchenViewModel(
                 repository.clearCart(orderType, tableNo)
                 cartRepository.syncCartCount(tableNo)
 
-                Log.d("WAITER_FLOW", "✅ Firestore + Bill saved successfully")
+               // Log.d("WAITER_FLOW", "✅ Firestore + Bill saved successfully")
 
             } catch (e: Exception) {
                 Log.e("WAITER_FLOW", "Error in waiterCartToBill", e)
             } finally {
                 _loading.value = false
+                isProcessing = false
             }
-        }
-    }
-
-    fun sendToFireStore(
-        cartList: List<PosCartEntity>,
-        tableNo: String,
-        deviceId: String,
-        deviceName: String?,
-
-    ) {
-        viewModelScope.launch {
-
-            _loading.value = true
-
-            val success = waiterKitchenRepository.sendOrderToFireStore(
-                cartList = cartList,
-                tableNo = tableNo,
-                sessionId = sessionId,
-                orderType = orderType,
-                deviceId = deviceId,
-                deviceName = deviceName,
-
-            )
-
-            if (success) {
-                repository.clearCart(orderType, tableNo)
-                cartRepository.syncCartCount(tableNo)
-            }
-
-            _loading.value = false
         }
     }
 
@@ -205,7 +182,7 @@ class WaiterKitchenViewModel(
                 deviceName = deviceName,
                 appVersion = appVersion,
                 createdAt = now,
-                sentBy = null,
+                sentBy = "WAITRER",
                 syncStatus = "DONE",
                 lastSyncedAt = null
             )
@@ -236,7 +213,7 @@ class WaiterKitchenViewModel(
                 )
             }
 
-            kotRepository.insertItemsAndSync(tableNo, items)
+            kotRepository.insertItemsInBill(tableNo, items)
 
 
                 kotRepository.markDoneAll(tableNo)
@@ -265,76 +242,6 @@ class WaiterKitchenViewModel(
         }
     }
      // ✅ POS signal: kitchen completed for table
-
-
-
-
-    fun cartToBIll_KitchenPrint(
-        orderType: String,
-        tableNo: String,
-        sessionId: String,
-        paymentType: String,
-        deviceId: String,
-        deviceName: String?,
-        appVersion: String?
-    ) {
-        Log.d("KITCHEN_DEBUG4", "sendToKitchen tableNo=$tableNo orderType=$orderType sessionId=$sessionId ")
-        //   logAllKotItems()
-        viewModelScope.launch {
-            _loading.value = true
-
-            // ✅ use sessionId as the real key for cart & KOT
-            val sessionKey = sessionId
-            val tableId = tableNo!!
-            //     Log.d("KITCHEN_DEBUG", "Resolved sessionKey=$sessionKey")
-
-            // ✅ FIX: Use sessionKey (for takeaway & delivery)
-            //val cartList = repository.getCartItems(sessionKey, orderType).first()
-            val cartList = repository.getCartItemsByTableId(tableId).first()
-            //Log.d("KITCHEN_DEBUG", "Cart fetched for type=$orderType, sessionKey=$sessionKey, size=${cartList.size}")
-
-            if (cartList.isEmpty()) {
-                Log.w("KITCHEN_DEBUG4", "⚠️ No new items found for orderType=$orderType (sessionKey=$sessionKey)")
-                _loading.value = false
-                return@launch
-            }
-
-            try {
-                val now = System.currentTimeMillis()
-                val orderId = UUID.randomUUID().toString()
-
-                //  Log.d("KITCHEN_DEBUG4", "Creating new KOT batchId=$orderId for $orderType")
-
-                val kotSaved = saveKotOnlyToKotItem_withPrint(
-                    orderType = orderType,
-                    sessionId = sessionId,
-                    tableNo = tableNo,
-                    cartItems = cartList,
-                    deviceId = deviceId,
-                    deviceName = deviceName,
-                    appVersion = appVersion
-                )
-
-                if (!kotSaved) {
-                    Log.e("KITCHEN_DEBUG4", " saveKotOnly() failed for session=$sessionKey")
-                    return@launch
-                }
-
-                //  Log.d("KITCHEN_DEBUG4", " KOT saved successfully (${cartList.size} items)")
-
-
-                repository.clearCart(orderType, tableId)
-                cartRepository.syncCartCount(tableId)
-            } catch (e: Exception) {
-                //  Log.e("KITCHEN_DEBUG", " Exception during placeOrder()", e)
-            } finally {
-                _loading.value = false
-            }
-        }
-    }
-
-
-
 
 
 
@@ -418,96 +325,6 @@ class WaiterKitchenViewModel(
         }
     }
 
-    private suspend fun saveKotOnlyToKotItem_withPrint(
-        orderType: String,
-        sessionId: String,
-        tableNo: String?,
-        cartItems: List<PosCartEntity>,
-        deviceId: String,
-        deviceName: String?,
-        appVersion: String?
-    ): Boolean = withContext(Dispatchers.IO) {
-
-        val tableNo = tableNo?: "";
-        try {
-            val db = AppDatabaseProvider.get(printerManager.appContext())
-            val kotBatchDao = db.kotBatchDao()
-            val kotItemDao = db.kotItemDao()
-
-            val batchId = UUID.randomUUID().toString()
-            val now = System.currentTimeMillis()
-
-            repository.markAllSent(tableNo)
-
-            val batch = PosKotBatchEntity(
-                id = batchId,
-                sessionId = sessionId,
-                tableNo = tableNo,
-                orderType = orderType,
-                deviceId = deviceId,
-                deviceName = deviceName,
-                appVersion = appVersion,
-                createdAt = now,
-                sentBy = null,
-                syncStatus = "DONE",
-                lastSyncedAt = null
-            )
-
-            kotBatchDao.insert(batch)
-
-            val items = cartItems.map { cart ->
-                PosKotItemEntity(
-                    id = UUID.randomUUID().toString(),
-                    sessionId = sessionId,
-                    kotBatchId = batchId,
-                    tableNo = tableNo,
-                    productId = cart.productId,
-                    name = cart.name,
-                    categoryId = cart.categoryId,
-                    categoryName = cart.categoryName,
-                    parentId = cart.parentId,
-                    isVariant = cart.isVariant,
-                    basePrice = cart.basePrice,
-                    quantity = cart.quantity,
-                    taxRate = cart.taxRate,
-                    taxType = cart.taxType,
-                    note = cart.note,
-                    modifiersJson = cart.modifiersJson,
-                    kitchenPrinted = false,
-                    status = "DONE",
-                    createdAt = now
-                )
-            }
-
-            kotRepository.insertItemsAndSync(tableNo, items)
-
-            // 🔥 PRINT (still inside same coroutine)
-            val unprintedItems = kotItemDao.getUnprintedItems(tableNo)
-
-            if (unprintedItems.isNotEmpty()) {
-                printerManager.printTextKitchen(
-                    PrinterRole.KITCHEN,
-                    sessionKey = tableNo,
-                    orderType = orderType,
-                    items = unprintedItems
-                )
-
-                kotRepository.markDoneAll(tableNo)
-                kotRepository.syncKinchenCount(tableNo)
-                kotRepository.syncBillCount(tableNo)
-
-                Log.d("KITCHEN_PRINT", "Done All printed for table=$tableNo")
-            }
-
-
-            true
-
-        } catch (e: Exception) {
-            Log.e("KOT", "❌ Failed to save KOT", e)
-            false
-        }
-    }
-
     private fun addItemToDebouncedKitchenPrint(
         item: PosKotItemEntity,
         orderType: String
@@ -551,6 +368,39 @@ class WaiterKitchenViewModel(
         }
     }
 
+//    fun closeTable(
+//        tableNo: String,
+//        paymentType: String,
+//        onSuccess: () -> Unit,
+//        onError: (String) -> Unit
+//    ) {
+//        viewModelScope.launch {
+//            try {
+//
+//                // 1️⃣ Take snapshot of bill items (NOT from mutable KOT table)
+//                val billingItems = _uiState.value.items
+//                if (billingItems.isEmpty()) {
+//                    onError("No items in bill")
+//                    return@launch
+//                }
+//
+//                // 2️⃣ Save bill to OrderMaster / OrderDetails
+//                saveOrder(billingItems, tableNo, paymentType)
+//
+//                // 3️⃣ Clear KOT items
+//                kotItemDao.deleteByTable(tableNo)
+//
+//                // 4️⃣ Clear UI state
+//                _uiState.value = _uiState.value.copy(items = emptyList())
+//
+//                // 5️⃣ Success → Go back
+//                onSuccess()
+//
+//            } catch (e: Exception) {
+//                onError("Error: ${e.message}")
+//            }
+//        }
+//    }
 
 
 }

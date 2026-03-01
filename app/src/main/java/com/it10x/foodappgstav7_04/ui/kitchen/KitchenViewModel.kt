@@ -268,7 +268,7 @@ class KitchenViewModel(
                 )
             }
 
-            kotRepository.insertItemsAndSync(tableNo, items)
+            kotRepository.insertItemsInBill(tableNo, items)
             kotRepository.syncBillCount(tableId)
 
 

@@ -24,7 +24,7 @@ class KotRepository(
     }
 
 
-    suspend fun insertItemsAndSync(
+    suspend fun insertItemsInBill(
         tableNo: String,
         items: List<PosKotItemEntity>
     ) {

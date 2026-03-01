@@ -46,7 +46,7 @@ fun WaiterKitchenMobile(
         }
         return
     }
-
+    val loading by waiterkitchenViewModel.loading.collectAsState()
     val subTotal = cartItems.sumOf { it.basePrice * it.quantity }
     val totalTax = cartItems.sumOf { ((it.basePrice * it.taxRate) / 100) * it.quantity }
     val grandTotal = subTotal + totalTax
@@ -113,7 +113,10 @@ fun WaiterKitchenMobile(
             }
 
             // Action Button
+
+
             Button(
+                enabled = !loading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
@@ -130,7 +133,8 @@ fun WaiterKitchenMobile(
                         cartList = cartItems,
                         tableNo = tableNo,
                         deviceId = deviceId,
-                        deviceName = Build.MODEL ?: "Unknown Device"
+                        deviceName = Build.MODEL ?: "Unknown Device",
+
                     )
                 }
             ) {

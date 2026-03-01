@@ -125,24 +125,31 @@ fun WaiterKitchenScreenTab(
 
 
                 Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
+                    enabled = !loading,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF16A34A)
+                    ),
                     onClick = {
                         val deviceId = Settings.Secure.getString(
                             context.contentResolver,
                             Settings.Secure.ANDROID_ID
                         )
+
                         waiterkitchenViewModel.waiterCartTo_FireStore_Bill(
                             cartList = cartItems,
                             tableNo = tableNo,
                             deviceId = deviceId,
-                            deviceName = Build.MODEL ?: "Unknown Device"
-                        )
+                            deviceName = Build.MODEL ?: "Unknown Device",
+
+                            )
                     }
                 ) {
                     Icon(
                         imageVector = Icons.Default.SoupKitchen,
-                        contentDescription = "Send all to Kitchen & Bill",
+                        contentDescription = null,
                         tint = Color.White
                     )
                     Spacer(Modifier.width(6.dp))
