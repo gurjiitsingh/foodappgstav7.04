@@ -45,35 +45,39 @@ interface OrderProductDao {
     // =====================================================
 
     // -------------------------
-    // CATEGORY SALES (PAID ONLY)
-    // -------------------------
+// CATEGORY SALES (PAID ONLY)
+// -------------------------
     @Query("""
-        SELECT categoryName, SUM(finalTotal) AS total
-        FROM pos_order_items
-        WHERE paymentStatus = 'PAID'
-          AND createdAt BETWEEN :from AND :to
-        GROUP BY categoryName
-        ORDER BY total DESC
-    """)
+    SELECT 
+        categoryName, 
+        SUM(quantity) AS totalQty,
+        SUM(finalTotal) AS total
+    FROM pos_order_items
+    WHERE paymentStatus = 'PAID'
+      AND createdAt BETWEEN :from AND :to
+    GROUP BY categoryName
+    ORDER BY total DESC
+""")
     suspend fun getCategorySalesBetween(
         from: Long,
         to: Long
     ): List<CategorySalesResult>
 
     // -------------------------
-    // ITEM SALES (PAID ONLY)
-    // -------------------------
+// ITEM SALES (PAID ONLY)
+// -------------------------
     @Query("""
-        SELECT 
-            categoryName,
-            name AS itemName,
-            SUM(finalTotal) AS total
-        FROM pos_order_items
-        WHERE paymentStatus = 'PAID'
-          AND createdAt BETWEEN :from AND :to
-        GROUP BY categoryName, name
-        ORDER BY categoryName ASC, total DESC
-    """)
+    SELECT 
+        categoryName,
+        name AS itemName,
+        SUM(quantity) AS totalQty,
+        SUM(finalTotal) AS total
+    FROM pos_order_items
+    WHERE paymentStatus = 'PAID'
+      AND createdAt BETWEEN :from AND :to
+    GROUP BY categoryName, name
+    ORDER BY categoryName ASC, total DESC
+""")
     suspend fun getItemSalesBetween(
         from: Long,
         to: Long
@@ -116,11 +120,13 @@ GROUP BY categoryId
 
 data class CategorySalesResult(
     val categoryName: String,
+    val totalQty: Int,
     val total: Double
 )
 
 data class ItemSalesResult(
     val categoryName: String,
     val itemName: String,
+    val totalQty: Int,
     val total: Double
 )

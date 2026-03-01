@@ -63,7 +63,7 @@ class SalesViewModel(
                 orderProductDao.getCategorySalesBetween(from, to)
 
             val categorySales = categoryResults.associate {
-                it.categoryName to it.total
+                it.categoryName to Pair(it.totalQty, it.total)
             }
 
             // ---------------- ITEM SALES ----------------
@@ -73,24 +73,26 @@ class SalesViewModel(
             val itemSales = itemResults
                 .groupBy { it.categoryName }
                 .mapValues { entry ->
-                    entry.value.associate { it.itemName to it.total }
+                    entry.value.associate {
+                        it.itemName to Pair(it.totalQty, it.total)
+                    }
                 }
 
             // ---------------- GROUPED TOTALS ----------------
             val beveragesTotal = categorySales
                 .filterKeys { it.equals("Beverages", true) }
-                .values.sum()
+                .values.sumOf { it.second }
 
             val wineTotal = categorySales
                 .filterKeys { it.equals("Wine", true) }
-                .values.sum()
+                .values.sumOf { it.second }
 
             val foodTotal = categorySales
                 .filterKeys {
                     !it.equals("Beverages", true) &&
                             !it.equals("Wine", true)
                 }
-                .values.sum()
+                .values.sumOf { it.second }
 
             _uiState.value = SalesUiState(
                 isLoading = false,
@@ -100,16 +102,16 @@ class SalesViewModel(
                 discountTotal = discountTotal,
                 paymentBreakup = paymentBreakup,
                 categorySales = categorySales,
-                itemSales = itemSales,   // ✅ IMPORTANT
+                itemSales = itemSales,
                 foodTotal = foodTotal,
                 beveragesTotal = beveragesTotal,
                 wineTotal = wineTotal,
                 from = from,
                 to = to
             )
-
         }
     }
+
 
 
 

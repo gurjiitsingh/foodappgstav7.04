@@ -701,21 +701,55 @@ Thank You!
     }
 
 
-
-    fun salesBySingleCategory(
+    fun salesCategorySummary(
         category: String,
-        items: Map<String, Double>,
+        totalQty: Int,
+        totalAmount: Double,
         outletInfo: OutletInfo,
         width: Int
     ): String {
 
         val divider = "-".repeat(width)
 
-        fun line(label: String, value: Double): String {
-            val formatted = "%.2f".format(value)
-            val safeLabel = label.take(width - formatted.length - 1)
-            val space = width - safeLabel.length - formatted.length
-            return safeLabel + " ".repeat(if (space > 0) space else 1) + formatted
+        fun line(label: String, value: String): String {
+            val safeLabel = label.take(width - value.length - 1)
+            val space = width - safeLabel.length - value.length
+            return safeLabel + " ".repeat(if (space > 0) space else 1) + value
+        }
+
+        val header = buildOutletHeader(outletInfo, width)
+
+        return buildString {
+
+            append("\u001B\u0061\u0000")
+            append(header + "\n")
+            append(divider + "\n")
+
+            append("CATEGORY SUMMARY\n")
+            append(category.uppercase() + "\n")
+            append(divider + "\n")
+
+            append(line("Total Qty", totalQty.toString()) + "\n")
+            append(line("Total Amount", "₹ %.2f".format(totalAmount)) + "\n")
+
+            append(divider + "\n\n")
+        }
+    }
+
+
+    fun salesBySingleCategory(
+        category: String,
+        items: Map<String, Pair<Int, Double>>,
+        outletInfo: OutletInfo,
+        width: Int
+    ): String {
+
+        val divider = "-".repeat(width)
+
+        fun line(label: String, value: String): String {
+            val safeLabel = label.take(width - value.length - 1)
+            val space = width - safeLabel.length - value.length
+            return safeLabel + " ".repeat(if (space > 0) space else 1) + value
         }
 
         val header = buildOutletHeader(outletInfo, width)
@@ -732,14 +766,27 @@ Thank You!
             if (items.isEmpty()) {
                 append("No sales data\n")
             } else {
-                items.forEach { (itemName, total) ->
-                    append(line(itemName, total) + "\n")
+
+                items.forEach { (itemName, data) ->
+
+                    val qty = data.first
+                    val total = data.second
+                    val rate = if (qty > 0) total / qty else 0.0
+
+                    append(itemName.take(width) + "\n")
+
+                    val qtyRate = "$qty x %.2f".format(rate)
+                    val totalStr = "%.2f".format(total)
+
+                    append(line(qtyRate, totalStr) + "\n")
+                    append("\n")
                 }
             }
 
             append(divider + "\n\n")
         }
     }
+
 
 
 }

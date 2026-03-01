@@ -190,7 +190,10 @@ fun SalesScreen(
 
 
 
-                items(uiState.categorySales.toList()) { (category, amount) ->
+                items(uiState.categorySales.toList()) { (category, data) ->
+
+                    val qty = data.first
+                    val amount = data.second
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -206,6 +209,7 @@ fun SalesScreen(
 
                             Column {
                                 Text(category)
+                                Text("Qty: $qty")
                                 Text("₹ %.2f".format(amount))
                             }
 
@@ -221,7 +225,27 @@ fun SalesScreen(
                                     )
                                 }
                             ) {
-                                Text("Print")
+                                Text("Print Detail")
+                            }
+                            Button(
+                                onClick = {
+
+                                    val data = uiState.categorySales[category]
+
+                                    if (data != null) {
+                                        val totalQty = data.first
+                                        val totalAmount = data.second
+
+                                        printer.printCategorySummary(
+                                            PrinterRole.BILLING,
+                                            category,
+                                            totalQty,
+                                            totalAmount
+                                        )
+                                    }
+                                }
+                            ) {
+                                Text("Print Summary")
                             }
                         }
                     }

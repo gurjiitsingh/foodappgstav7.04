@@ -374,10 +374,43 @@ class PrinterManager(
     }
 
 
+    fun printCategorySummary(
+        role: PrinterRole,
+        category: String,
+        totalQty: Int,
+        totalAmount: Double,
+        onResult: (Boolean) -> Unit = {}
+    ) {
+
+        val config = prefs.getPrinterConfig(role)
+        if (config == null) {
+            onResult(false)
+            return
+        }
+
+        val size = prefs.getPrinterSize(role) ?: "80mm"
+        val width = if (size == "80mm") 48 else 32
+
+        val outletDao = AppDatabaseProvider.get(context).outletDao()
+        val outletEntity = runBlocking { outletDao.getOutlet() }
+        val info = OutletMapper.fromEntity(outletEntity)
+
+        val text = ReceiptFormatter.salesCategorySummary(
+            category,
+            totalQty,
+            totalAmount,
+            info,
+            width
+        )
+
+        printText(role, text, onResult)
+    }
+
+
     fun printSingleCategorySales(
         role: PrinterRole,
         category: String,
-        items: Map<String, Double>,
+        items: Map<String, Pair<Int, Double>>,
         onResult: (Boolean) -> Unit = {}
     ) {
 
@@ -403,6 +436,7 @@ class PrinterManager(
 
         printText(role, text, onResult)
     }
+
 
 
 }
