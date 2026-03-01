@@ -426,4 +426,9 @@ WHERE tableNo = :tableNo AND status = 'DONE'
     suspend fun isOrderAlreadyProcessed(orderId: String): Boolean
 
 
+    @Query("SELECT * FROM pos_kot_items")
+    suspend fun getTotalKotItemsOnce(): List<PosKotItemEntity>
+
+    @Query("DELETE FROM pos_kot_items")
+    suspend fun deleteAll()
 }

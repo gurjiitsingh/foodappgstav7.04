@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import com.it10x.foodappgstav7_04.data.pos.repository.TableRepository
+import com.it10x.foodappgstav7_04.data.pos.repository.CartRepository
+import com.it10x.foodappgstav7_04.data.pos.repository.KotRepository
 
 object TableStatus {
 
@@ -29,19 +31,27 @@ class PosTableViewModel(app: Application) : AndroidViewModel(app) {
     val tables: StateFlow<List<TableUiState>> = _tables
 
     // ✅ THEN dao
-    private val dao = AppDatabaseProvider.get(app).tableDao()
-    private val orderDao = AppDatabaseProvider.get(app).orderMasterDao()
+    private val database = AppDatabaseProvider.get(app)
+
+    private val dao = database.tableDao()
+    private val orderDao = database.orderMasterDao()
     private val repository = TableRepository(dao)
 
-    private val kotItemDao =
-        AppDatabaseProvider.get(app).kotItemDao()
+    private val cartRepository = CartRepository(
+        dao = database.cartDao(),
+        tableDao = dao
+    )
 
-    // ✅ ONLY ONE init
+    private val kotRepository = KotRepository(
+        batchDao = database.kotBatchDao(),
+        kotItemDao = database.kotItemDao(),
+        tableDao = dao
+    )
+
     init {
         observeTables()
+        refreshAllTableCounts()
     }
-
-
 
 
     data class TableUiState(
@@ -92,6 +102,20 @@ class PosTableViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    private fun refreshAllTableCounts() {
+        viewModelScope.launch {
+
+            val allTables = dao.getAll()
+
+            allTables.forEach { table ->
+                val tableId = table.id
+
+                cartRepository.syncCartCount(tableId)
+               // kotRepository.syncKinchenCount(tableId)
+                kotRepository.syncBillCount(tableId)
+            }
+        }
+    }
 
 
     fun loadTables() {

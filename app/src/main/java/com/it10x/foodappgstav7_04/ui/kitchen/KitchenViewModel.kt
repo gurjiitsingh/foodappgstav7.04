@@ -242,69 +242,6 @@ class KitchenViewModel(
     }
 
 
-    fun cartToBIll_KitchenNoPrint(
-        orderType: String,
-        tableNo: String,
-        sessionId: String,
-        paymentType: String,
-        deviceId: String,
-        deviceName: String?,
-        appVersion: String?
-    ) {
-        Log.d("KITCHEN_DEBUG4", "sendToKitchen tableNo=$tableNo orderType=$orderType sessionId=$sessionId ")
-        //   logAllKotItems()
-        viewModelScope.launch {
-            _loading.value = true
-
-            // ✅ use sessionId as the real key for cart & KOT
-            val sessionKey = sessionId
-            val tableId = tableNo!!
-            //     Log.d("KITCHEN_DEBUG", "Resolved sessionKey=$sessionKey")
-
-            // ✅ FIX: Use sessionKey (for takeaway & delivery)
-            //val cartList = repository.getCartItems(sessionKey, orderType).first()
-            val cartList = repository.getCartItemsByTableId(tableId).first()
-            //Log.d("KITCHEN_DEBUG", "Cart fetched for type=$orderType, sessionKey=$sessionKey, size=${cartList.size}")
-
-            if (cartList.isEmpty()) {
-                Log.w("KITCHEN_DEBUG4", "⚠️ No new items found for orderType=$orderType (sessionKey=$sessionKey)")
-                _loading.value = false
-                return@launch
-            }
-
-            try {
-                val now = System.currentTimeMillis()
-                val orderId = UUID.randomUUID().toString()
-
-                //  Log.d("KITCHEN_DEBUG4", "Creating new KOT batchId=$orderId for $orderType")
-
-                val kotSaved = saveKotOnlyToKotItem(
-                    orderType = orderType,
-                    sessionId = sessionId,
-                    tableNo = tableNo,
-                    cartItems = cartList,
-                    deviceId = deviceId,
-                    deviceName = deviceName,
-                    appVersion = appVersion
-                )
-
-                if (!kotSaved) {
-                    Log.e("KITCHEN_DEBUG4", " saveKotOnly() failed for session=$sessionKey")
-                    return@launch
-                }
-
-                //  Log.d("KITCHEN_DEBUG4", " KOT saved successfully (${cartList.size} items)")
-
-
-                repository.clearCart(orderType, tableId)
-                cartRepository.syncCartCount(tableId)
-            } catch (e: Exception) {
-                //  Log.e("KITCHEN_DEBUG", " Exception during placeOrder()", e)
-            } finally {
-                _loading.value = false
-            }
-        }
-    }
 
 
     fun cartToKotMainPOS(
@@ -317,7 +254,7 @@ class KitchenViewModel(
         appVersion: String?
     ) {
        // Log.d("KITCHEN_PRINT", "sendToKitchen tableNo=$tableNo ")
-        //   logAllKotItems()
+           logAllKotItems()
         viewModelScope.launch {
             _loading.value = true
 
@@ -357,10 +294,10 @@ class KitchenViewModel(
                     Log.e("KITCHEN_DEBUG4", " saveKotOnly() failed for session=$sessionKey")
                     return@launch
                 }
-                //  Log.d("KITCHEN_DEBUG4", " KOT saved successfully (${cartList.size} items)")
+
 
                 repository.clearCart(orderType, tableId)
-                cartRepository.syncCartCount(tableId)
+
             } catch (e: Exception) {
                 //  Log.e("KITCHEN_DEBUG", " Exception during placeOrder()", e)
             } finally {
@@ -535,7 +472,7 @@ class KitchenViewModel(
         deviceName: String?,
         appVersion: String?
     ) {
-        Log.d("KOT_TRACE", "Called from: ${Throwable().stackTrace[1]}")
+      //  Log.d("KOT_TRACE", "Called from: ${Throwable().stackTrace[1]}")
 
         if (cartItems.isEmpty()) {
             Log.w("KOT_BRIDGE", "⚠️ createKotAndPrint called with empty cartItems")
@@ -560,10 +497,6 @@ class KitchenViewModel(
                 return
             }
 
-            Log.d(
-                "KOT_BRIDGE",
-                "✅ KOT Created & Printed | table=$tableNo | items=${cartItems.size}"
-            )
 
         } catch (e: Exception) {
             Log.e("KOT_BRIDGE", "❌ Exception in createKotAndPrint()", e)
@@ -583,7 +516,7 @@ class KitchenViewModel(
         deviceName: String?,
         appVersion: String?
     ): Boolean = withContext(Dispatchers.IO) {
-        Log.d("KOT", "saveKotAndPrintKitchen Called from: ${Throwable().stackTrace[1]}")
+      //  Log.d("KOT", "saveKotAndPrintKitchen Called from: ${Throwable().stackTrace[1]}")
         val tableNo = tableNo?: "";
         try {
             val db = AppDatabaseProvider.get(printerManager.appContext())
@@ -593,7 +526,7 @@ class KitchenViewModel(
             val batchId = UUID.randomUUID().toString()
             val now = System.currentTimeMillis()
 
-        //    repository.markAllSent(tableNo)
+
 
             val batch = PosKotBatchEntity(
                 id = batchId,
@@ -654,112 +587,25 @@ class KitchenViewModel(
 
                 kotItemDao.markBatchKitchenPrintedBatch(batchId)
                 kotRepository.markDoneAll(tableNo)
-                kotRepository.syncKinchenCount(tableNo)
+                //kotRepository.markPrinted(tableNo)
+                //kotRepository.syncKinchenCount(tableNo)
+                cartRepository.syncCartCount(tableId)
                 kotRepository.syncBillCount(tableNo)
             }
 
-
+            logAllKotItemsOnce()
             true
 
         } catch (e: Exception) {
             Log.e("KOT", "❌ Failed to save KOT", e)
             false
         }
+
     }
 
 
 
-//    private suspend fun saveKotOnlyToKotItem(
-//        orderType: String,
-//        sessionId: String,
-//        tableNo: String?,
-//        cartItems: List<PosCartEntity>,
-//        deviceId: String,
-//        deviceName: String?,
-//        appVersion: String?
-//    ): Boolean {
-//        return try {
-//            val db = AppDatabaseProvider.get(printerManager.appContext())
-//            val kotBatchDao = db.kotBatchDao()
-//            val kotItemDao = db.kotItemDao()
-//
-//            val batchId = UUID.randomUUID().toString()
-//            val now = System.currentTimeMillis()
-//            repository.markAllSent(tableNo ?: orderType)
-//            //  Log.d("KOT_STEP", "Marked ${items.size} items as sent to kitchen")
-//            val batch = PosKotBatchEntity(
-//                id = batchId,
-//                sessionId = sessionId,
-//                tableNo = tableNo ?: orderType,
-//                orderType = orderType,
-//                deviceId = deviceId,
-//                deviceName = deviceName,
-//                appVersion = appVersion,
-//                createdAt = now,
-//                sentBy = null,
-//                syncStatus = "DONE",
-//                lastSyncedAt = null
-//            )
-//
-//            withContext(Dispatchers.IO) {
-//                kotBatchDao.insert(batch)
-//
-//                //    Log.d("KOT_DEBUG", "Saved ${cartItems.size} KOT items for tableNo=${tableNo ?: orderType}")
-//                val items = cartItems.map { cart ->
-//                    PosKotItemEntity(
-//                        id = UUID.randomUUID().toString(),
-//                        sessionId = sessionId,
-//                        kotBatchId = batchId,
-//                        tableNo = tableNo ?: orderType,
-//                        productId = cart.productId,
-//                        name = cart.name,
-//                        categoryId = cart.categoryId,
-//                        parentId = cart.parentId,
-//                        isVariant = cart.isVariant,
-//                        basePrice = cart.basePrice,
-//                        quantity = cart.quantity,
-//                        taxRate = cart.taxRate,
-//                        taxType = cart.taxType,
-//                        print = false,
-//                        status = "DONE",   // ✅ REQUIRED
-//                        createdAt = now
-//                    )
-//                }
-//                kotRepository.insertItemsAndSync(tableNo ?: orderType, items)
-//
-//
-//
-//
-//
-//
-//
-//                //kotItemDao.insertAll(items)
-//            }
-//
-//            Log.d("KOT", "✅ KOT SAVED: batch=$batchId items=${cartItems.size}")
-//            true
-//
-//        } catch (e: Exception) {
-//            Log.e("KOT", "❌ Failed to save KOT", e)
-//            false
-//        }
-//    }
 
-    fun logAllKotItems() {
-        viewModelScope.launch {
-            kotItemDao.getTotalKotItems()
-                .collect { items ->
-                    Log.d("KITCHEN_DEBUG1", "Total items = ${items.size}")
-
-                    items.forEach { item ->
-                        Log.d(
-                            "KITCHEN_DEBUG1",
-                            "Status=${item.status},print=${item.kitchenPrinted}, Table=${item.tableNo},Name=${item.name},  BatchId=${item.kotBatchId},ID=${item.id}"
-                        )
-                    }
-                }
-        }
-    }
 
 
 
@@ -815,6 +661,53 @@ class KitchenViewModel(
             Log.d("KITCHEN_DEBUG", "All KOT items deleted")
         }
     }
+
+
+
+    // 🔽 FETCH ALL FROM FIRESTORE
+
+
+
+
+    fun logAllKotItems() {
+        viewModelScope.launch {
+            kotItemDao.getTotalKotItems()
+                .collect { items ->
+                    Log.d("KITCHEN_DEBUG1", "Total items = ${items.size}")
+
+                    items.forEach { item ->
+                        Log.d(
+                            "KITCHEN_DEBUG1",
+                            "Status=${item.status},print=${item.kitchenPrinted}, Table=${item.tableNo},Name=${item.name},  BatchId=${item.kotBatchId},ID=${item.id}"
+                        )
+                    }
+                }
+        }
+    }
+
+    fun logAllKotItemsOnce() {
+        viewModelScope.launch {
+
+            val items = kotItemDao.getTotalKotItemsOnce()
+
+            Log.d("KOT_DEBUG", "Total items = ${items.size}")
+
+            items.forEach { item ->
+                Log.d(
+                    "KOT_DEBUG",
+                    "Qty=${item.quantity}, " +
+                            "Table=${item.tableNo}, " +
+                            "Name=${item.name}, " +
+                            "Status=${item.status}, " +
+                            "Printed=${item.kitchenPrinted}"
+
+                           // "BatchId=${item.kotBatchId}, " +
+                           // "ID=${item.id}"
+                )
+            }
+        }
+    }
+
 
 }
 

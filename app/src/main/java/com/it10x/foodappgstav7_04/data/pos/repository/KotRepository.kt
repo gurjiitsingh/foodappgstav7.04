@@ -38,9 +38,10 @@ class KotRepository(
 
     suspend fun markDoneAll(tableNo: String) {
         kotItemDao.markAllDone(tableNo)
+         }
+    suspend fun markPrinted(tableNo: String) {
         kotItemDao.markAllPrinted(tableNo)
-
-       }
+    }
 
     private suspend fun syncBillCounters(tableNo: String) {
         val billCount = kotItemDao.countDoneItems(tableNo) ?: 0
@@ -50,25 +51,18 @@ class KotRepository(
     }
 
     private suspend fun syncKitchenCount(tableNo: String) {
-        Log.d("TABLE_DEBUG", "syncKitchenCount() called for table = $tableNo")
-
-        val count = kotItemDao.countKitchenPending(tableNo) ?: 0
-
-        Log.d("TABLE_DEBUG", "Kitchen pending count from DB = $count")
-
+        val count = kotItemDao.countBillDone(tableNo) ?: 0
         tableDao.setKitchenCount(tableNo, count)
-
-        Log.d("TABLE_DEBUG", "Kitchen count updated in tableDao")
     }
 
     suspend fun syncBillCount(tableNo: String) {
-        // 🔥 refresh counters after state change
-        syncBillCounters(tableNo)
+          syncBillCounters(tableNo)
     }
 
+    //THIS FUNCITON IS CALLED IN TABLE GRID
     suspend fun syncKinchenCount(tableNo: String) {
-        // 🔥 refresh counters after state change
-        syncKitchenCount(tableNo)
+            syncKitchenCount(tableNo)
     }
+
 
 }

@@ -1,5 +1,6 @@
 package com.it10x.foodappgstav7_04.ui.settings
 
+import android.app.Application
 import android.os.Process
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -13,6 +14,8 @@ import com.it10x.foodappgstav7_04.firebase.ClientIdStore
 import com.it10x.foodappgstav7_04.viewmodel.CustomerSyncViewModel
 import com.it10x.foodappgstav7_04.data.online.sync.CustomerSyncViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModel
+import com.it10x.foodappgstav7_04.ui.kitchen.KitchenViewModelFactory
 
 private const val ADMIN_PASSWORD = "gsta123456"
 
@@ -25,6 +28,8 @@ fun AdvancedSettingsScreen() {
         factory = CustomerSyncViewModelFactory(context.applicationContext as android.app.Application)
     )
 
+
+
     val customerSyncing by customerSyncVm.syncing.collectAsState()
     val customerStatus by customerSyncVm.status.collectAsState()
 
@@ -32,6 +37,13 @@ fun AdvancedSettingsScreen() {
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var accessGranted by remember { mutableStateOf(false) }
+
+
+    val kitchenVm: AdminViewModel = viewModel(
+        factory = KitchenAdminViewModelFactory(
+            context.applicationContext as Application
+        )
+    )
 
     Column(
         modifier = Modifier
@@ -46,6 +58,36 @@ fun AdvancedSettingsScreen() {
         )
 
         Divider()
+
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { kitchenVm.logAllKotItemsOnce() }
+        ) {
+            Text("Log All KOT Items")
+        }
+
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Kitchen Data",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { kitchenVm.logAllKotItemsOnce() }
+        ) {
+            Text("Log All KOT Items")
+        }
+
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { kitchenVm.deleteAllKotItems() }
+        ) {
+            Text("Delete All KOT Items")
+        }
+
 
         // 🔐 Show admin options only after password check
         if (!accessGranted) {

@@ -105,17 +105,11 @@ class CartRepository(
         dao.deleteItem(productId, tableNo)
         syncCartCount(tableNo)
     }
+
+    //THIS FUNCTION IS CALLED IN TABLE GRID
     suspend fun syncCartCount(tableNo: String) {
-      //  Log.d("TABLE_DEBUG", "Cart to count and update table count")
-        val count = dao.getCartCountForTable(tableNo) ?: 0
-      //  Log.d("TABLE_DEBUG", "Cart pending count from DB = $count")
-        tableDao.setCartCount(tableNo, count)
-    }
-
-
-
-    suspend fun getCartCountForTable(tableId: String): Int {
-        return dao.getCartCount(tableId)
+         val count = dao.getCartCountForTable(tableNo) ?: 0
+         tableDao.setCartCount(tableNo, count)
     }
 
 

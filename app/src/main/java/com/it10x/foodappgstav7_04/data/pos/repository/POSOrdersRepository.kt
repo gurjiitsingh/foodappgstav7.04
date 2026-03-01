@@ -48,7 +48,7 @@ class POSOrdersRepository(
 
     // ✅ Clears cart safely depending on order type
     suspend fun clearCart(orderType: String, tableId: String) {
-        Log.d("CART_DEBUG", " empty cart for table NO.  (${tableId} items)")
+      //  Log.d("CART_DEBUG", " empty cart for table NO.  (${tableId} items)")
         if (!tableId.isNullOrBlank()) {
             cartDao.clearCartByTableId(tableId)      // Table-based session
         }
