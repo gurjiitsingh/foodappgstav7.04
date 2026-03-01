@@ -107,7 +107,7 @@ class WaiterKitchenViewModel(
                     deviceId = deviceId,
                     deviceName = deviceName
                 )
-
+               // Log.e("WAITER_FLOW", "Firestore upload waiterkitchenviewmodel")
                 if (!success) {
                     Log.e("WAITER_FLOW", "Firestore upload failed")
                     return@launch

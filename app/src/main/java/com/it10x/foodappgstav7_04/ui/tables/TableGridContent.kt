@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.it10x.foodappgstav7_04.viewmodel.PosTableViewModel
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -43,129 +44,117 @@ fun TableGridContent(
 
     val groupedByArea = tables
         .groupBy { it.table.area ?: "General" }
-        .mapValues { (_, areaTables) ->
-            areaTables.sortedBy { it.table.sortOrder ?: Int.MAX_VALUE }
-        }
+        .toSortedMap()
 
-    Column(
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 85.dp),
         modifier = Modifier
             .fillMaxSize()
-            .padding(6.dp)
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
 
-        groupedByArea.entries.forEach { (areaName, areaTables) ->
+        groupedByArea.forEach { (areaName, areaTables) ->
 
-            Text(
-                text = areaName,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(vertical = 6.dp)
-            )
-
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 85.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 100.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+            // 🔹 AREA HEADER (Full Width)
+            item(
+                span = { GridItemSpan(maxLineSpan) }
             ) {
+                Text(
+                    text = areaName,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
 
-                items(areaTables) { ui ->
+            // 🔹 TABLES
+            items(
+                items = areaTables.sortedBy { it.table.sortOrder ?: Int.MAX_VALUE },
+                key = { it.table.id }
+            ) { ui ->
 
-                    val table = ui.table
-                    val isSelected = selectedTable == table.id
+                val table = ui.table
+                val isSelected = selectedTable == table.id
 
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        tonalElevation = 2.dp,
-                        border = if (isSelected)
-                            BorderStroke(2.dp, Color(0xFFFF9800))
-                        else null,
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    tonalElevation = 2.dp,
+                    border = if (isSelected)
+                        BorderStroke(2.dp, Color(0xFFFF9800))
+                    else null,
+                    modifier = Modifier
+                        .aspectRatio(.95f)
+                        .clickable {
+                            onTableSelected(table.id)
+                        }
+                ) {
+
+                    Column(
                         modifier = Modifier
-                            .aspectRatio(.95f)
-                            .clickable {
-                                // 👉 Only select table
-                                onTableSelected(table.id)
-                            }
+                            .fillMaxSize()
+                            .padding(8.dp),
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
 
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(8.dp),
-                            verticalArrangement = Arrangement.SpaceBetween
-                        ) {
-
-                            // 🔵 HEADER ROW (Table Name + Quick POS)
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
-                                modifier = Modifier
-                                    .clickable {
-                                        // 👉 Select table
-                                        onTableSelected(table.id)
-
-                                        // 👉 Navigate to POS
-                                        navController.navigate("pos") {
-                                            launchSingleTop = true
-                                        }
-                                    }
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .padding(horizontal = 10.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-
-                                    Text(
-                                        text = table.tableName,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 2,
-                                        softWrap = true,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-
-                                    Icon(
-                                        imageVector = Icons.Default.PointOfSale,
-                                        contentDescription = "New Order",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
+                        // HEADER BUTTON
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            border = BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.primary
+                            ),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                            modifier = Modifier.clickable {
+                                onTableSelected(table.id)
+                                navController.navigate("pos") {
+                                    launchSingleTop = true
                                 }
                             }
-
-
-                            // 🔵 STATUS BADGES
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                if (ui.cartCount > 0) {
-                                    StatusBadge(
-                                        icon = "🛒",
-                                        text = ui.cartCount.toString(),
-                                        bgColor = Color(0xFF1976D2).copy(alpha = 0.6f)
-                                    )
-                                }
+                                Text(
+                                    text = table.tableName,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Icon(
+                                    imageVector = Icons.Default.PointOfSale,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
 
-                                if (ui.billDoneCount > 0) {
-                                    StatusBadge(
-                                        icon = "🧾",
-                                        text = ui.billDoneCount.toString(),
-                                        bgColor = Color(0xFF2E7D32).copy(alpha = 0.6f)
-                                    )
-                                }
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            if (ui.cartCount > 0) {
+                                StatusBadge(
+                                    icon = "🛒",
+                                    text = ui.cartCount.toString(),
+                                    bgColor = Color(0xFF1976D2).copy(alpha = 0.6f)
+                                )
+                            }
+
+                            if (ui.billDoneCount > 0) {
+                                StatusBadge(
+                                    icon = "🧾",
+                                    text = ui.billDoneCount.toString(),
+                                    bgColor = Color(0xFF2E7D32).copy(alpha = 0.6f)
+                                )
                             }
                         }
                     }
-
-
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
